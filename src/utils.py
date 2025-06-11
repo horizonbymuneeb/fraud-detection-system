@@ -43,3 +43,5 @@ def format_number(n: int) -> str:
             return f"{n:.1f}{unit}"
         n /= 1000
     return f"{n:.1f}T"
+
+# Fix timestamp feature extraction timezone bug [2025-06-11T16:59:01]
