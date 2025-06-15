@@ -180,3 +180,4 @@
 [2025-06-11T12:16:14] Add model explainability with SHAP values
 [2025-06-12T15:48:29] Add model monitoring dashboard for drift
 [2025-06-12T14:20:55] WIP: tuning neural networks for fraud patterns
+[2025-06-15T13:18:11] Fix memory issue in batch inference worker
