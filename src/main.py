@@ -180,3 +180,5 @@ if __name__ == '__main__':
 # WIP: tuning neural networks for fraud patterns [2025-06-12T14:20:55]
 
 # Fix memory issue in batch inference worker [2025-06-15T13:18:11]
+
+# Implement Kafka streaming consumer for events [2025-06-17T10:22:25]
