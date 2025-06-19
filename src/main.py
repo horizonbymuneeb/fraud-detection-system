@@ -186,3 +186,5 @@ if __name__ == '__main__':
 # Implement A/B testing framework for models [2025-06-18T20:33:11]
 
 # Add transaction velocity feature engineering [2025-06-19T14:27:56]
+
+# WIP: benchmarking latency on 100K TPS target [2025-06-19T20:07:29]
