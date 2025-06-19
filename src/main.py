@@ -184,3 +184,5 @@ if __name__ == '__main__':
 # Implement Kafka streaming consumer for events [2025-06-17T10:22:25]
 
 # Implement A/B testing framework for models [2025-06-18T20:33:11]
+
+# Add transaction velocity feature engineering [2025-06-19T14:27:56]
