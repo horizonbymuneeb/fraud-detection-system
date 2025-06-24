@@ -188,3 +188,5 @@ if __name__ == '__main__':
 # Add transaction velocity feature engineering [2025-06-19T14:27:56]
 
 # WIP: benchmarking latency on 100K TPS target [2025-06-19T20:07:29]
+
+# Fix timestamp feature extraction timezone bug [2025-06-24T15:05:57]
