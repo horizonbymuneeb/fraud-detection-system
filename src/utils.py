@@ -51,3 +51,5 @@ def format_number(n: int) -> str:
 # Add transaction velocity feature engineering [2025-06-17T11:26:40]
 
 # Add model monitoring dashboard for drift [2025-06-24T18:12:21]
+
+# Fix memory issue in batch inference worker [2025-06-25T12:56:37]
