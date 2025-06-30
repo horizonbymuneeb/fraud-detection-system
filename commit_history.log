@@ -189,3 +189,4 @@
 [2025-06-24T15:05:57] Fix timestamp feature extraction timezone bug
 [2025-06-24T18:12:21] Add model monitoring dashboard for drift
 [2025-06-25T12:56:37] Fix memory issue in batch inference worker
+[2025-06-30T14:16:18] Add anomaly detection as backup classifier
