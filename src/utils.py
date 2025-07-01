@@ -57,3 +57,5 @@ def format_number(n: int) -> str:
 # Add anomaly detection as backup classifier [2025-06-30T14:16:18]
 
 # Fix memory issue in batch inference worker [2025-07-01T09:05:38]
+
+# WIP: tuning neural networks for fraud patterns [2025-07-01T20:27:44]
