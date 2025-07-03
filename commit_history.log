@@ -192,3 +192,4 @@
 [2025-06-30T14:16:18] Add anomaly detection as backup classifier
 [2025-07-01T09:05:38] Fix memory issue in batch inference worker
 [2025-07-01T20:27:44] WIP: tuning neural networks for fraud patterns
+[2025-07-03T09:02:59] Update feature pipeline for real-time scoring
