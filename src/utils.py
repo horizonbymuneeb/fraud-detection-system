@@ -65,3 +65,5 @@ def format_number(n: int) -> str:
 # Implement ensemble of XGBoost and RandomForest [2025-07-07T19:24:10]
 
 # Add model explainability with SHAP values [2025-07-09T17:04:59]
+
+# Update dashboard for fraud metrics visualization [2025-07-14T10:37:19]
