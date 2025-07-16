@@ -194,3 +194,5 @@ if __name__ == '__main__':
 # Update feature pipeline for real-time scoring [2025-07-03T09:02:59]
 
 # Add logging for prediction audit trail [2025-07-14T17:54:39]
+
+# Update deployment scripts for Docker container [2025-07-16T15:41:32]
