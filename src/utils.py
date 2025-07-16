@@ -67,3 +67,5 @@ def format_number(n: int) -> str:
 # Add model explainability with SHAP values [2025-07-09T17:04:59]
 
 # Update dashboard for fraud metrics visualization [2025-07-14T10:37:19]
+
+# Update deployment scripts for Docker container [2025-07-16T16:57:24]
