@@ -204,3 +204,5 @@ if __name__ == '__main__':
 # Add model monitoring dashboard for drift [2025-07-20T10:40:30]
 
 # Implement A/B testing framework for models [2025-07-21T13:02:16]
+
+# Update dashboard for fraud metrics visualization [2025-07-22T18:45:22]
