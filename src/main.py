@@ -212,3 +212,5 @@ if __name__ == '__main__':
 # Implement XGBoost fraud detection classifier [2025-07-28T10:35:38]
 
 # Fix memory issue in batch inference worker [2025-07-29T18:57:12]
+
+# Add anomaly detection as backup classifier [2025-07-31T17:54:30]
