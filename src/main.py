@@ -214,3 +214,5 @@ if __name__ == '__main__':
 # Fix memory issue in batch inference worker [2025-07-29T18:57:12]
 
 # Add anomaly detection as backup classifier [2025-07-31T17:54:30]
+
+# WIP: debugging SMOTE class imbalance handling [2025-08-03T14:31:13]
