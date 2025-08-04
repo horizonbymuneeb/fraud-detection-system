@@ -213,3 +213,4 @@
 [2025-07-29T18:57:12] Fix memory issue in batch inference worker
 [2025-07-31T17:54:30] Add anomaly detection as backup classifier
 [2025-08-03T14:31:13] WIP: debugging SMOTE class imbalance handling
+[2025-08-04T10:41:00] WIP: benchmarking latency on 100K TPS target

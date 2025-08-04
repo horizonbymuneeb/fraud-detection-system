@@ -216,3 +216,5 @@ if __name__ == '__main__':
 # Add anomaly detection as backup classifier [2025-07-31T17:54:30]
 
 # WIP: debugging SMOTE class imbalance handling [2025-08-03T14:31:13]
+
+# WIP: benchmarking latency on 100K TPS target [2025-08-04T10:41:00]
