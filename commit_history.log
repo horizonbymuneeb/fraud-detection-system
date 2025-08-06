@@ -215,3 +215,4 @@
 [2025-08-03T14:31:13] WIP: debugging SMOTE class imbalance handling
 [2025-08-04T10:41:00] WIP: benchmarking latency on 100K TPS target
 [2025-08-05T12:14:14] WIP: tuning neural networks for fraud patterns
+[2025-08-06T09:15:22] Add model monitoring dashboard for drift
