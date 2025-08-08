@@ -222,3 +222,5 @@ if __name__ == '__main__':
 # Add model monitoring dashboard for drift [2025-08-06T09:15:22]
 
 # Update feature store integration for batch [2025-08-06T10:55:44]
+
+# Add model explainability with SHAP values [2025-08-08T12:08:41]
