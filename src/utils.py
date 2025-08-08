@@ -77,3 +77,5 @@ def format_number(n: int) -> str:
 # WIP: tuning neural networks for fraud patterns [2025-07-24T11:01:52]
 
 # WIP: tuning neural networks for fraud patterns [2025-08-05T12:14:14]
+
+# Implement ensemble of XGBoost and RandomForest [2025-08-08T10:22:17]
