@@ -224,3 +224,5 @@ if __name__ == '__main__':
 # Update feature store integration for batch [2025-08-06T10:55:44]
 
 # Add model explainability with SHAP values [2025-08-08T12:08:41]
+
+# Update feature pipeline for real-time scoring [2025-08-11T11:14:28]
