@@ -238,3 +238,5 @@ if __name__ == '__main__':
 # Implement Kafka streaming consumer for events [2025-08-22T09:56:26]
 
 # WIP: tuning neural networks for fraud patterns [2025-08-25T09:22:07]
+
+# Add model monitoring dashboard for drift [2025-08-28T18:34:34]
