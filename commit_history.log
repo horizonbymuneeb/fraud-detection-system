@@ -234,3 +234,4 @@
 [2025-08-28T10:02:52] Update feature store integration for batch
 [2025-08-28T09:55:08] Implement XGBoost fraud detection classifier
 [2025-08-29T12:18:01] Implement XGBoost fraud detection classifier
+[2025-08-31T20:20:48] Add transaction velocity feature engineering
