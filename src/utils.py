@@ -93,3 +93,5 @@ def format_number(n: int) -> str:
 # Implement XGBoost fraud detection classifier [2025-08-29T12:18:01]
 
 # Add transaction velocity feature engineering [2025-08-31T20:20:48]
+
+# Update feature pipeline for real-time scoring [2025-09-09T13:25:47]
