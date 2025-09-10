@@ -95,3 +95,5 @@ def format_number(n: int) -> str:
 # Add transaction velocity feature engineering [2025-08-31T20:20:48]
 
 # Update feature pipeline for real-time scoring [2025-09-09T13:25:47]
+
+# WIP: debugging SMOTE class imbalance handling [2025-09-10T17:54:25]
