@@ -99,3 +99,5 @@ def format_number(n: int) -> str:
 # WIP: debugging SMOTE class imbalance handling [2025-09-10T17:54:25]
 
 # Add model monitoring dashboard for drift [2025-09-11T15:00:10]
+
+# Implement XGBoost fraud detection classifier [2025-09-13T09:28:50]
