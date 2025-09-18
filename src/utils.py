@@ -101,3 +101,5 @@ def format_number(n: int) -> str:
 # Add model monitoring dashboard for drift [2025-09-11T15:00:10]
 
 # Implement XGBoost fraud detection classifier [2025-09-13T09:28:50]
+
+# WIP: debugging SMOTE class imbalance handling [2025-09-18T12:55:49]
