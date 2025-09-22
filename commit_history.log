@@ -243,3 +243,4 @@
 [2025-09-13T09:28:50] Implement XGBoost fraud detection classifier
 [2025-09-18T12:55:49] WIP: debugging SMOTE class imbalance handling
 [2025-09-18T19:47:26] Add model monitoring dashboard for drift
+[2025-09-22T17:53:49] Update dashboard for fraud metrics visualization
