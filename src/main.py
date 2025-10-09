@@ -254,3 +254,5 @@ if __name__ == '__main__':
 # Add logging for prediction audit trail [2025-09-30T12:16:06]
 
 # Update dashboard for fraud metrics visualization [2025-10-03T16:41:02]
+
+# Update feature store integration for batch [2025-10-09T17:19:41]
