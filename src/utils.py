@@ -109,3 +109,5 @@ def format_number(n: int) -> str:
 # Add model monitoring dashboard for drift [2025-10-03T20:52:32]
 
 # WIP: benchmarking latency on 100K TPS target [2025-10-09T09:57:25]
+
+# Implement XGBoost fraud detection classifier [2025-10-13T13:42:09]
