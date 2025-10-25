@@ -262,3 +262,5 @@ if __name__ == '__main__':
 # Fix timestamp feature extraction timezone bug [2025-10-16T20:11:09]
 
 # Update dashboard for fraud metrics visualization [2025-10-23T14:42:13]
+
+# Fix memory issue in batch inference worker [2025-10-25T12:11:04]
