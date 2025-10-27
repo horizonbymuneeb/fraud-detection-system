@@ -111,3 +111,5 @@ def format_number(n: int) -> str:
 # WIP: benchmarking latency on 100K TPS target [2025-10-09T09:57:25]
 
 # Implement XGBoost fraud detection classifier [2025-10-13T13:42:09]
+
+# WIP: debugging SMOTE class imbalance handling [2025-10-27T19:38:25]
