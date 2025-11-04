@@ -113,3 +113,5 @@ def format_number(n: int) -> str:
 # Implement XGBoost fraud detection classifier [2025-10-13T13:42:09]
 
 # WIP: debugging SMOTE class imbalance handling [2025-10-27T19:38:25]
+
+# Update feature pipeline for real-time scoring [2025-11-04T14:41:50]

@@ -258,3 +258,4 @@
 [2025-10-27T19:38:25] WIP: debugging SMOTE class imbalance handling
 [2025-10-29T09:09:16] Fix memory issue in batch inference worker
 [2025-11-03T20:58:53] Implement real-time inference with Redis cache
+[2025-11-04T14:41:50] Update feature pipeline for real-time scoring
