@@ -270,3 +270,5 @@ if __name__ == '__main__':
 # Implement real-time inference with Redis cache [2025-11-03T20:58:53]
 
 # Add transaction velocity feature engineering [2025-11-05T19:22:54]
+
+# Implement Kafka streaming consumer for events [2025-11-06T19:05:20]
