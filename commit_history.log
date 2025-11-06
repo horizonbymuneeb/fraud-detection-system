@@ -263,3 +263,4 @@
 [2025-11-05T14:02:52] Implement ensemble of XGBoost and RandomForest
 [2025-11-05T19:22:54] Add transaction velocity feature engineering
 [2025-11-06T19:05:20] Implement Kafka streaming consumer for events
+[2025-11-06T11:14:21] WIP: debugging SMOTE class imbalance handling

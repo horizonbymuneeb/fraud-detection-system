@@ -272,3 +272,5 @@ if __name__ == '__main__':
 # Add transaction velocity feature engineering [2025-11-05T19:22:54]
 
 # Implement Kafka streaming consumer for events [2025-11-06T19:05:20]
+
+# WIP: debugging SMOTE class imbalance handling [2025-11-06T11:14:21]
