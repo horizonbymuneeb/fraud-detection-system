@@ -274,3 +274,5 @@ if __name__ == '__main__':
 # Implement Kafka streaming consumer for events [2025-11-06T19:05:20]
 
 # WIP: debugging SMOTE class imbalance handling [2025-11-06T11:14:21]
+
+# Update deployment scripts for Docker container [2025-11-11T10:29:00]
