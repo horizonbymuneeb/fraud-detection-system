@@ -276,3 +276,5 @@ if __name__ == '__main__':
 # WIP: debugging SMOTE class imbalance handling [2025-11-06T11:14:21]
 
 # Update deployment scripts for Docker container [2025-11-11T10:29:00]
+
+# WIP: benchmarking latency on 100K TPS target [2025-11-12T19:32:41]
