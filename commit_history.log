@@ -271,3 +271,4 @@
 [2025-11-12T19:32:41] WIP: benchmarking latency on 100K TPS target
 [2025-11-12T12:46:02] Implement XGBoost fraud detection classifier
 [2025-11-15T09:06:35] Implement Kafka streaming consumer for events
+[2025-11-17T20:09:27] Update feature store integration for batch

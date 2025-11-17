@@ -278,3 +278,5 @@ if __name__ == '__main__':
 # Update deployment scripts for Docker container [2025-11-11T10:29:00]
 
 # WIP: benchmarking latency on 100K TPS target [2025-11-12T19:32:41]
+
+# Update feature store integration for batch [2025-11-17T20:09:27]
