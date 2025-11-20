@@ -282,3 +282,5 @@ if __name__ == '__main__':
 # Update feature store integration for batch [2025-11-17T20:09:27]
 
 # Implement real-time inference with Redis cache [2025-11-18T11:54:29]
+
+# WIP: debugging SMOTE class imbalance handling [2025-11-20T20:35:00]

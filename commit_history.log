@@ -276,3 +276,4 @@
 [2025-11-19T18:41:37] Add logging for prediction audit trail
 [2025-11-19T17:47:36] Implement XGBoost fraud detection classifier
 [2025-11-20T19:54:14] Add anomaly detection as backup classifier
+[2025-11-20T20:35:00] WIP: debugging SMOTE class imbalance handling
