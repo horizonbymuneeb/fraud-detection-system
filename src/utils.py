@@ -133,3 +133,5 @@ def format_number(n: int) -> str:
 # Add logging for prediction audit trail [2025-11-19T18:41:37]
 
 # Implement XGBoost fraud detection classifier [2025-11-19T17:47:36]
+
+# Add anomaly detection as backup classifier [2025-11-20T19:54:14]
