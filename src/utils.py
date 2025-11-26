@@ -135,3 +135,5 @@ def format_number(n: int) -> str:
 # Implement XGBoost fraud detection classifier [2025-11-19T17:47:36]
 
 # Add anomaly detection as backup classifier [2025-11-20T19:54:14]
+
+# Update feature store integration for batch [2025-11-26T13:55:41]
