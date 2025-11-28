@@ -139,3 +139,5 @@ def format_number(n: int) -> str:
 # Update feature store integration for batch [2025-11-26T13:55:41]
 
 # Add model monitoring dashboard for drift [2025-11-27T09:10:07]
+
+# Fix memory issue in batch inference worker [2025-11-28T09:55:06]
