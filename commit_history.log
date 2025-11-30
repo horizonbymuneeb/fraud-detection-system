@@ -281,3 +281,4 @@
 [2025-11-27T09:10:07] Add model monitoring dashboard for drift
 [2025-11-28T09:55:06] Fix memory issue in batch inference worker
 [2025-11-30T20:29:16] Add transaction velocity feature engineering
+[2025-11-30T19:35:02] Update dashboard for fraud metrics visualization
