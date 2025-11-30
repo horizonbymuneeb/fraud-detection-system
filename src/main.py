@@ -284,3 +284,5 @@ if __name__ == '__main__':
 # Implement real-time inference with Redis cache [2025-11-18T11:54:29]
 
 # WIP: debugging SMOTE class imbalance handling [2025-11-20T20:35:00]
+
+# Add transaction velocity feature engineering [2025-11-30T20:29:16]
