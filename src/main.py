@@ -286,3 +286,5 @@ if __name__ == '__main__':
 # WIP: debugging SMOTE class imbalance handling [2025-11-20T20:35:00]
 
 # Add transaction velocity feature engineering [2025-11-30T20:29:16]
+
+# Implement cross-validation for time series [2025-12-03T12:10:35]
