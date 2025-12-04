@@ -149,3 +149,5 @@ def format_number(n: int) -> str:
 # Implement A/B testing framework for models [2025-12-03T19:32:12]
 
 # Add model monitoring dashboard for drift [2025-12-03T15:03:42]
+
+# Add anomaly detection as backup classifier [2025-12-04T12:07:06]
