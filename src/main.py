@@ -288,3 +288,5 @@ if __name__ == '__main__':
 # Add transaction velocity feature engineering [2025-11-30T20:29:16]
 
 # Implement cross-validation for time series [2025-12-03T12:10:35]
+
+# Implement ensemble of XGBoost and RandomForest [2025-12-08T13:59:45]
