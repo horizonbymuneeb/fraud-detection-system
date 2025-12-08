@@ -288,3 +288,4 @@
 [2025-12-03T12:10:35] Implement cross-validation for time series
 [2025-12-04T12:07:06] Add anomaly detection as backup classifier
 [2025-12-08T13:59:45] Implement ensemble of XGBoost and RandomForest
+[2025-12-08T11:51:40] WIP: benchmarking latency on 100K TPS target
