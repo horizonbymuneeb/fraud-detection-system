@@ -290,3 +290,5 @@ if __name__ == '__main__':
 # Implement cross-validation for time series [2025-12-03T12:10:35]
 
 # Implement ensemble of XGBoost and RandomForest [2025-12-08T13:59:45]
+
+# Add model explainability with SHAP values [2025-12-11T17:49:00]
