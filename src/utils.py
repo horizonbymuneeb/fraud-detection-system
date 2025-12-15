@@ -153,3 +153,5 @@ def format_number(n: int) -> str:
 # Add anomaly detection as backup classifier [2025-12-04T12:07:06]
 
 # WIP: benchmarking latency on 100K TPS target [2025-12-08T11:51:40]
+
+# Add model monitoring dashboard for drift [2025-12-15T17:10:10]
