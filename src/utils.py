@@ -159,3 +159,5 @@ def format_number(n: int) -> str:
 # Add model explainability with SHAP values [2025-12-16T18:25:52]
 
 # WIP: debugging SMOTE class imbalance handling [2025-12-17T13:36:45]
+
+# Implement real-time inference with Redis cache [2025-12-17T15:09:11]
