@@ -294,3 +294,5 @@ if __name__ == '__main__':
 # Add model explainability with SHAP values [2025-12-11T17:49:00]
 
 # Add logging for prediction audit trail [2025-12-19T15:06:47]
+
+# Fix memory issue in batch inference worker [2025-12-19T18:42:30]
