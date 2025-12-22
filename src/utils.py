@@ -161,3 +161,5 @@ def format_number(n: int) -> str:
 # WIP: debugging SMOTE class imbalance handling [2025-12-17T13:36:45]
 
 # Implement real-time inference with Redis cache [2025-12-17T15:09:11]
+
+# Update feature pipeline for real-time scoring [2025-12-22T09:13:10]
