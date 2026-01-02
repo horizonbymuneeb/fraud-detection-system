@@ -298,3 +298,5 @@ if __name__ == '__main__':
 # Fix memory issue in batch inference worker [2025-12-19T18:42:30]
 
 # Implement real-time inference with Redis cache [2025-12-27T11:16:45]
+
+# Update deployment scripts for Docker container [2026-01-02T14:00:16]
