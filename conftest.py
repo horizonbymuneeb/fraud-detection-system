@@ -40,3 +40,15 @@ def tiny_config():
 def tiny_frame(tiny_config):
     """Generated transaction stream used by most tests."""
     return generate_transactions(tiny_config)
+
+
+@pytest.fixture(scope="session")
+def tiny_datasets(tiny_config, tiny_frame):
+    """Prepared feature matrices for the tiny stream."""
+    return prepare_datasets(tiny_frame, tiny_config)
+
+
+@pytest.fixture(scope="session")
+def fitted(tiny_config, tiny_datasets):
+    """A fitted model result for attribution/trainer tests."""
+    return fit_model(tiny_datasets["X_train"], tiny_datasets["y_train"], tiny_config)
