@@ -36,3 +36,27 @@ def initial_estimate(model: GradientBoostingClassifier) -> float:
             raise ValueError("degenerate class prior; cannot compute base margin")
         return float(np.log(p1 / p0))
     return 0.0
+
+
+def base_margin(model: GradientBoostingClassifier) -> float:
+    """Constant offset shared by every prediction.
+
+    That is the init raw prediction plus the (learning-rate-scaled) value stored
+    at the root of every tree: each row passes through every root, so the root
+    values are a constant that belongs with the base, not with any feature.
+    """
+    if not hasattr(model, "estimators_"):
+        raise ValueError("model is not fitted")
+    root_sum = 0.0
+    for i in range(model.estimators_.shape[0]):
+        tree = model.estimators_[i, 0]
+        root_sum += float(np.ravel(tree.tree_.value)[0])
+    return float(initial_estimate(model) + model.learning_rate * root_sum)
+
+
+def extract_stages(model: GradientBoostingClassifier) -> tuple[float, list[object], float]:
+    """Return ``(learning_rate, trees, base_margin)`` for a fitted model."""
+    if not hasattr(model, "estimators_"):
+        raise ValueError("model is not fitted")
+    trees = [model.estimators_[i, 0] for i in range(model.estimators_.shape[0])]
+    return float(model.learning_rate), trees, base_margin(model)
