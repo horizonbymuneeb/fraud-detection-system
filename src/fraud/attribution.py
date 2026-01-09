@@ -60,3 +60,34 @@ def extract_stages(model: GradientBoostingClassifier) -> tuple[float, list[objec
         raise ValueError("model is not fitted")
     trees = [model.estimators_[i, 0] for i in range(model.estimators_.shape[0])]
     return float(model.learning_rate), trees, base_margin(model)
+
+
+def tree_path_contribution(tree: object, row: np.ndarray, n_features: int, out: np.ndarray) -> float:
+    """Add this tree's path deltas to ``out`` and return the leaf value."""
+    node = 0
+    values = np.ravel(tree.tree_.value)
+    while tree.tree_.children_left[node] != -1:
+        feature = int(tree.tree_.feature[node])
+        threshold = float(tree.tree_.threshold[node])
+        child = (
+            tree.tree_.children_left[node]
+            if row[feature] <= threshold
+            else tree.tree_.children_right[node]
+        )
+        out[feature] += float(values[child] - values[node])
+        node = int(child)
+    return float(values[node])
+
+
+def contributions_for_row(
+    model: GradientBoostingClassifier, row: np.ndarray, n_features: int | None = None
+) -> np.ndarray:
+    """Exact per-feature log-odds contributions for one row."""
+    row = np.asarray(row, dtype=np.float64).ravel()
+    n_features = n_features or len(row)
+    learning_rate, trees, _base = extract_stages(model)
+    contributions = np.zeros(n_features, dtype=np.float64)
+    total = 0.0
+    for tree in trees:
+        total += tree_path_contribution(tree, row, n_features, contributions)
+    return contributions * learning_rate
