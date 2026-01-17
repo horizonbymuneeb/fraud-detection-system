@@ -91,3 +91,29 @@ def contributions_for_row(
     for tree in trees:
         total += tree_path_contribution(tree, row, n_features, contributions)
     return contributions * learning_rate
+
+
+def contribution_matrix(
+    model: GradientBoostingClassifier, X: pd.DataFrame | np.ndarray
+) -> tuple[float, np.ndarray]:
+    """Contributions for every row; returns ``(base_margin, matrix)``."""
+    values = np.asarray(X, dtype=np.float64)
+    if values.ndim != 2:
+        raise ValueError("X must be two-dimensional")
+    learning_rate, trees, base = extract_stages(model)
+    matrix = np.zeros_like(values, dtype=np.float64)
+    for tree in trees:
+        for i in range(values.shape[0]):
+            tree_path_contribution(tree, values[i], values.shape[1], matrix[i])
+    return base, matrix * learning_rate
+
+
+def raw_margin_from_contributions(base: float, contributions: np.ndarray) -> np.ndarray:
+    """Reconstruct the raw margin from the additive decomposition."""
+    return base + np.sum(contributions, axis=1)
+
+
+def probability_from_margin(margin: float | np.ndarray) -> np.ndarray:
+    """Sigmoid that maps a raw log-odds margin to a probability."""
+    m = np.clip(np.asarray(margin, dtype=np.float64), -40.0, 40.0)
+    return 1.0 / (1.0 + np.exp(-m))
