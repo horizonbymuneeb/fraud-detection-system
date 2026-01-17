@@ -169,3 +169,5 @@ def format_number(n: int) -> str:
 # Implement Kafka streaming consumer for events [2026-01-06T17:43:53]
 
 # Update deployment scripts for Docker container [2026-01-08T15:27:55]
+
+# Add transaction velocity feature engineering [2026-01-17T17:06:43]
