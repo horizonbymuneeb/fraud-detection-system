@@ -71,3 +71,23 @@ def test_top_contributors_ordering_and_grouped_sums(fitted, tiny_datasets):
     grouped = grouped_contributions(matrix[0], fitted.feature_names)
     assert abs(grouped["contribution"].sum() - matrix[0].sum()) < 1e-9
     assert set(grouped["group"]) <= {"velocity", "behaviour", "context"}
+
+
+def test_path_attributor_and_explanations(tmp_path, fitted, tiny_datasets):
+    attributor = PathAttributor(fitted.model, fitted.feature_names)
+    table = attributor.explain(tiny_datasets["X_test"].head(8))
+    assert table.shape[0] == 8
+    assert {"base_margin", "raw_margin", "probability"} <= set(table.columns)
+    assert attributor.additivity_error(tiny_datasets["X_test"].head(8)) < 1e-9
+    assert len(attributor.top_for(tiny_datasets["X_test"], 0, 3)) == 3
+
+    row = tiny_datasets["X_test"].iloc[0]
+    payload = explain_row(fitted.model, row, threshold=0.5, top_k=4)
+    assert payload["additivity_ok"] is True
+    assert payload["decision"] in {"block", "allow"}
+    assert 0.0 <= payload["probability"] <= 1.0
+
+    path = save_explanations(tmp_path / "explanations.json", table, sample=3)
+    data = json.loads(path.read_text())
+    assert len(data["rows"]) == 3
+    assert len(data["rows"][0]["top_features"]) <= 5

@@ -117,3 +117,11 @@ def probability_from_margin(margin: float | np.ndarray) -> np.ndarray:
     """Sigmoid that maps a raw log-odds margin to a probability."""
     m = np.clip(np.asarray(margin, dtype=np.float64), -40.0, 40.0)
     return 1.0 / (1.0 + np.exp(-m))
+
+
+def additivity_error(model: GradientBoostingClassifier, X: pd.DataFrame) -> float:
+    """Largest difference between reconstructed and model raw margins."""
+    base, matrix = contribution_matrix(model, X)
+    reconstructed = raw_margin_from_contributions(base, matrix)
+    reference = model.decision_function(X)
+    return float(np.max(np.abs(reconstructed - reference)))
