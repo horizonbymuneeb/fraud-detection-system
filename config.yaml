@@ -1,0 +1,65 @@
+# Tunables read by src/fraud/config.py. Every value here is used by code.
+
+seed: 20240117
+
+data:
+  n_cards: 2500
+  n_days: 90
+  start_date: "2024-01-01"
+  # Average legitimate transactions per active card per day.
+  activity_rate: 0.9
+  # Share of all transactions that are fraud after injection (~0.5%).
+  base_fraud_rate: 0.005
+  # How the injected fraud budget is split across patterns.
+  fraud_mix:
+    velocity: 0.35
+    amount: 0.25
+    geo: 0.20
+    night: 0.20
+  output_dir: "data"
+
+features:
+  velocity_windows_hours: [1, 24, 168]
+  # A card needs this many prior transactions before its amount statistics
+  # are considered trustworthy; below it we fall back to population stats.
+  min_history_txns: 3
+  # Floor on the amount-deviation denominator so a card with tiny variance
+  # cannot produce a 500-sigma feature.
+  amount_zscore_floor: 5.0
+  # Winsorising bounds for count/sum features, fitted on train only.
+  clip_quantile_high: 0.999
+  # Merchant-category risk overrides; defaults live in src/fraud/features_context.py.
+  category_risk:
+    gift_cards: 0.85
+    electronics: 0.55
+    jewellery: 0.60
+    crypto: 0.95
+    groceries: 0.05
+    travel: 0.45
+
+split:
+  train_fraction: 0.70
+  # Rows inside this many hours of the boundary are dropped from the test set
+  # so a test transaction always has a full 7-day velocity history.
+  boundary_gap_hours: 168
+
+model:
+  n_estimators: 300
+  learning_rate: 0.05
+  max_depth: 3
+  min_samples_leaf: 25
+  subsample: 0.85
+  max_features: "sqrt"
+  l2_regularization: 0.1
+  validation_fraction: 0.1
+  n_iter_no_change: 20
+  random_state: 20240117
+
+cost:
+  # Cost of manually reviewing one false positive, in the same currency as the amounts.
+  false_positive_cost: 3.0
+  # Cost of one missed fraud = the loss itself plus chargeback handling fee.
+  fraud_loss_cost: 250.0
+  # Missed fraud also costs the transaction amount itself; this multiplier scales it.
+  amount_loss_multiplier: 1.0
+  threshold_grid_points: 401
