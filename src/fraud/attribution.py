@@ -125,3 +125,24 @@ def additivity_error(model: GradientBoostingClassifier, X: pd.DataFrame) -> floa
     reconstructed = raw_margin_from_contributions(base, matrix)
     reference = model.decision_function(X)
     return float(np.max(np.abs(reconstructed - reference)))
+
+
+def top_contributors(contributions: np.ndarray, columns: list[str], k: int = 5) -> list[dict[str, object]]:
+    """The ``k`` features with the largest absolute contribution, signed."""
+    if k < 1:
+        raise ValueError("k must be >= 1")
+    order = np.argsort(-np.abs(contributions))[:k]
+    return [
+        {"feature": columns[i], "contribution": float(contributions[i])}
+        for i in order
+    ]
+
+
+def grouped_contributions(contributions: np.ndarray, columns: list[str]) -> pd.DataFrame:
+    """Sum contributions by feature group (velocity / behaviour / context)."""
+    from .feature_pipeline import feature_group
+
+    frame = pd.DataFrame({"feature": columns, "contribution": contributions})
+    frame["group"] = [feature_group(name) for name in frame["feature"]]
+    grouped = frame.groupby("group", sort=False)["contribution"].sum()
+    return pd.DataFrame({"group": grouped.index, "contribution": grouped.to_numpy()})
