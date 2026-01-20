@@ -307,3 +307,4 @@
 [2026-01-17T17:06:43] Add transaction velocity feature engineering
 [2026-01-20T10:25:21] WIP: tuning neural networks for fraud patterns
 [2026-01-20T20:52:08] Implement XGBoost fraud detection classifier
+[2026-01-20T20:44:24] WIP: debugging SMOTE class imbalance handling
