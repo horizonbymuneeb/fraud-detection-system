@@ -146,3 +146,60 @@ def grouped_contributions(contributions: np.ndarray, columns: list[str]) -> pd.D
     frame["group"] = [feature_group(name) for name in frame["feature"]]
     grouped = frame.groupby("group", sort=False)["contribution"].sum()
     return pd.DataFrame({"group": grouped.index, "contribution": grouped.to_numpy()})
+
+
+def global_attribution(model: GradientBoostingClassifier, X: pd.DataFrame) -> pd.Series:
+    """Mean absolute contribution per feature across rows, sorted."""
+    _base, matrix = contribution_matrix(model, X)
+    mean_abs = np.mean(np.abs(matrix), axis=0)
+    return pd.Series(mean_abs, index=list(X.columns), dtype=np.float64).sort_values(ascending=False)
+
+
+def explain_row(
+    model: GradientBoostingClassifier,
+    row: pd.Series,
+    columns: list[str] | None = None,
+    threshold: float = 0.5,
+    top_k: int = 5,
+) -> dict[str, object]:
+    """Analyst-facing explanation for one transaction."""
+    columns = columns or list(row.index)
+    values = np.asarray(row[columns], dtype=np.float64)
+    base, matrix = contribution_matrix(model, pd.DataFrame([values], columns=columns))
+    contributions = matrix[0]
+    margin = float(base + contributions.sum())
+    probability = float(probability_from_margin(margin))
+    return {
+        "base_margin": float(base),
+        "raw_margin": margin,
+        "probability": probability,
+        "decision": "block" if probability >= threshold else "allow",
+        "top_features": top_contributors(contributions, columns, top_k),
+        "additivity_ok": bool(abs(margin - float(model.decision_function(pd.DataFrame([values], columns=columns))[0])) < 1e-9),
+    }
+
+
+@dataclass(frozen=True)
+class PathAttributor:
+    """Reusable wrapper so a scorer does not re-walk the model per call site."""
+
+    model: GradientBoostingClassifier
+    feature_names: list[str]
+
+    def explain(self, X: pd.DataFrame | np.ndarray) -> pd.DataFrame:
+        """Attribution matrix indexed like ``X`` with feature columns."""
+        base, matrix = contribution_matrix(self.model, X)
+        frame = pd.DataFrame(matrix, columns=self.feature_names)
+        frame.insert(0, "base_margin", base)
+        frame["raw_margin"] = frame["base_margin"] + frame[self.feature_names].sum(axis=1)
+        frame["probability"] = probability_from_margin(frame["raw_margin"].to_numpy())
+        return frame
+
+    def additivity_error(self, X: pd.DataFrame) -> float:
+        """Forward to the module-level check for this model."""
+        return additivity_error(self.model, X)
+
+    def top_for(self, X: pd.DataFrame, row_position: int = 0, k: int = 5) -> list[dict[str, object]]:
+        """Top contributors for one positional row of ``X``."""
+        _base, matrix = contribution_matrix(self.model, X.iloc[[row_position]])
+        return top_contributors(matrix[0], self.feature_names, k)
