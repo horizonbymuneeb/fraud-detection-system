@@ -308,3 +308,5 @@ if __name__ == '__main__':
 # Implement XGBoost fraud detection classifier [2026-01-20T20:52:08]
 
 # WIP: debugging SMOTE class imbalance handling [2026-01-20T20:44:24]
+
+# Implement Kafka streaming consumer for events [2026-01-23T20:31:57]
