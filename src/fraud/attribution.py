@@ -203,3 +203,31 @@ class PathAttributor:
         """Top contributors for one positional row of ``X``."""
         _base, matrix = contribution_matrix(self.model, X.iloc[[row_position]])
         return top_contributors(matrix[0], self.feature_names, k)
+
+
+def save_explanations(
+    path: str | Path, explanations: pd.DataFrame, sample: int = 5
+) -> Path:
+    """Write the top-``sample`` highest-scoring transactions' explanations."""
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    ranked = explanations.sort_values("probability", ascending=False).head(sample)
+    payload = {
+        "rows": [
+            {
+                "probability": float(row["probability"]),
+                "top_features": [
+                    {"feature": col, "contribution": float(row[col])}
+                    for col in ranked.columns
+                    if col not in {"base_margin", "raw_margin", "probability"}
+                ][:5],
+            }
+            for _, row in ranked.iterrows()
+        ]
+    }
+    # Keep only the five strongest features per row, ordered by magnitude.
+    for row in payload["rows"]:
+        row["top_features"].sort(key=lambda item: -abs(item["contribution"]))
+        row["top_features"] = row["top_features"][:5]
+    path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    return path
