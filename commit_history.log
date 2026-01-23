@@ -310,3 +310,4 @@
 [2026-01-20T20:44:24] WIP: debugging SMOTE class imbalance handling
 [2026-01-22T14:02:05] WIP: tuning neural networks for fraud patterns
 [2026-01-23T20:31:57] Implement Kafka streaming consumer for events
+[2026-01-23T12:56:38] Update feature store integration for batch
