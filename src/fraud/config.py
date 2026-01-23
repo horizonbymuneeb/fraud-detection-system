@@ -14,3 +14,5 @@ from typing import Any, Mapping
 import yaml
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
+DEFAULT_CONFIG_PATH = REPO_ROOT / "config.yaml"
+REQUIRED_SECTIONS = ("data", "features", "split", "model", "cost")
