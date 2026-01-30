@@ -310,3 +310,5 @@ if __name__ == '__main__':
 # WIP: debugging SMOTE class imbalance handling [2026-01-20T20:44:24]
 
 # Implement Kafka streaming consumer for events [2026-01-23T20:31:57]
+
+# Add model monitoring dashboard for drift [2026-01-30T11:03:15]
