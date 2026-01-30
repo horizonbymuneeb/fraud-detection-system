@@ -312,3 +312,5 @@ if __name__ == '__main__':
 # Implement Kafka streaming consumer for events [2026-01-23T20:31:57]
 
 # Add model monitoring dashboard for drift [2026-01-30T11:03:15]
+
+# Update deployment scripts for Docker container [2026-01-30T16:17:28]
