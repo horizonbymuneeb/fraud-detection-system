@@ -181,3 +181,5 @@ def format_number(n: int) -> str:
 # Add transaction velocity feature engineering [2026-01-23T17:55:15]
 
 # Update feature store integration for batch [2026-01-30T13:55:33]
+
+# Fix timestamp feature extraction timezone bug [2026-02-01T18:37:12]
