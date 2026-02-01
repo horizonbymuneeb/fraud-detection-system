@@ -77,3 +77,26 @@ class CostConfig:
     fraud_loss_cost: float = 250.0
     amount_loss_multiplier: float = 1.0
     threshold_grid_points: int = 401
+
+
+@dataclass(frozen=True)
+class Config:
+    """Full experiment configuration."""
+
+    seed: int
+    data: DataConfig
+    features: FeatureConfig
+    split: SplitConfig
+    model: ModelConfig
+    cost: CostConfig
+
+
+def read_yaml(path: str | Path) -> dict[str, Any]:
+    """Load a YAML mapping from ``path``, raising ``FileNotFoundError`` if absent."""
+    path = Path(path)
+    if not path.exists():
+        raise FileNotFoundError(f"config file not found: {path}")
+    raw = yaml.safe_load(path.read_text(encoding="utf-8"))
+    if not isinstance(raw, dict):
+        raise ValueError(f"config root must be a mapping, got {type(raw).__name__}")
+    return raw
