@@ -100,3 +100,21 @@ def read_yaml(path: str | Path) -> dict[str, Any]:
     if not isinstance(raw, dict):
         raise ValueError(f"config root must be a mapping, got {type(raw).__name__}")
     return raw
+
+
+def require_section(raw: Mapping[str, Any], name: str) -> Mapping[str, Any]:
+    """Return ``raw[name]`` as a mapping, or raise ``ValueError`` naming it."""
+    if name not in raw:
+        raise ValueError(f"config is missing required section: {name!r}")
+    section = raw[name]
+    if not isinstance(section, Mapping):
+        raise ValueError(f"config section {name!r} must be a mapping")
+    return section
+
+
+def _as_int(value: Any, key: str) -> int:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise ValueError(f"{key} must be an integer, got {value!r}")
+    if float(value) != int(value):
+        raise ValueError(f"{key} must be an integer, got {value!r}")
+    return int(value)

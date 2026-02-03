@@ -34,3 +34,27 @@ def test_overrides_are_applied_per_section():
 def test_missing_section_is_named_in_the_error():
     with pytest.raises(ValueError, match="cost"):
         build_config({"seed": 1, "data": {}, "features": {}, "split": {}, "model": {}})
+
+
+def test_missing_file_raises_file_not_found(tmp_path):
+    with pytest.raises(FileNotFoundError):
+        read_yaml(tmp_path / "nope.yaml")
+
+
+def test_invalid_fraud_rate_and_costs_are_rejected():
+    raw = read_yaml(DEFAULT_CONFIG_PATH)
+    raw["data"]["base_fraud_rate"] = 0.5
+    with pytest.raises(ValueError, match="base_fraud_rate"):
+        build_config(raw)
+
+    raw = read_yaml(DEFAULT_CONFIG_PATH)
+    raw["cost"]["fraud_loss_cost"] = -1.0
+    with pytest.raises(ValueError, match="fraud_loss_cost"):
+        build_config(raw)
+
+
+def test_fraud_mix_must_sum_to_one():
+    raw = read_yaml(DEFAULT_CONFIG_PATH)
+    raw["data"]["fraud_mix"] = {"velocity": 0.5, "amount": 0.2}
+    with pytest.raises(ValueError, match="sum to 1.0"):
+        build_config(raw)
