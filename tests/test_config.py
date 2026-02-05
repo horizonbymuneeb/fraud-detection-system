@@ -58,3 +58,26 @@ def test_fraud_mix_must_sum_to_one():
     raw["data"]["fraud_mix"] = {"velocity": 0.5, "amount": 0.2}
     with pytest.raises(ValueError, match="sum to 1.0"):
         build_config(raw)
+
+
+def test_unknown_fraud_mix_key_is_rejected():
+    raw = read_yaml(DEFAULT_CONFIG_PATH)
+    raw["data"]["fraud_mix"] = {"velocity": 1.0, "chargeback": 0.0}
+    with pytest.raises(ValueError, match="fraud_mix"):
+        build_config(raw)
+
+
+def test_require_section_rejects_scalars():
+    with pytest.raises(ValueError, match="mapping"):
+        require_section({"data": 3}, "data")
+
+
+def test_round_trip_to_dict_and_description():
+    cfg = load_config(DEFAULT_CONFIG_PATH)
+    as_dict = config_to_dict(cfg)
+    assert as_dict["data"]["n_cards"] == cfg.data.n_cards
+    assert as_dict["features"]["velocity_windows_hours"] == list(
+        cfg.features.velocity_windows_hours
+    )
+    text = describe_config(cfg)
+    assert "cards=" in text and "trees=" in text

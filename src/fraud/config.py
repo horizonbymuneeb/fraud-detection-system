@@ -118,3 +118,18 @@ def _as_int(value: Any, key: str) -> int:
     if float(value) != int(value):
         raise ValueError(f"{key} must be an integer, got {value!r}")
     return int(value)
+
+
+def _as_float(value: Any, key: str) -> float:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise ValueError(f"{key} must be a number, got {value!r}")
+    return float(value)
+
+
+def _as_windows(value: Any) -> tuple[int, ...]:
+    if not isinstance(value, (list, tuple)) or not value:
+        raise ValueError("features.velocity_windows_hours must be a non-empty list")
+    windows = tuple(_as_int(v, "features.velocity_windows_hours") for v in value)
+    if any(w <= 0 for w in windows):
+        raise ValueError("velocity windows must be positive")
+    return tuple(sorted(set(windows)))
