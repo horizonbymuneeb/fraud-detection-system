@@ -316,3 +316,5 @@ if __name__ == '__main__':
 # Update deployment scripts for Docker container [2026-01-30T16:17:28]
 
 # Update feature store integration for batch [2026-02-03T15:59:10]
+
+# Add logging for prediction audit trail [2026-02-05T09:24:55]
