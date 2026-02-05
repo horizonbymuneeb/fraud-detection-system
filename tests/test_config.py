@@ -81,3 +81,12 @@ def test_round_trip_to_dict_and_description():
     )
     text = describe_config(cfg)
     assert "cards=" in text and "trees=" in text
+
+
+def test_validate_config_accumulates_problems():
+    cfg = load_config(DEFAULT_CONFIG_PATH)
+    broken = load_config(DEFAULT_CONFIG_PATH)
+    object.__setattr__(broken.split, "train_fraction", 0.99)
+    with pytest.raises(ValueError):
+        validate_config(broken)
+    assert cfg.split.train_fraction == 0.7
