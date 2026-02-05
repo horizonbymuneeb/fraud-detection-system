@@ -318,3 +318,5 @@ if __name__ == '__main__':
 # Update feature store integration for batch [2026-02-03T15:59:10]
 
 # Add logging for prediction audit trail [2026-02-05T09:24:55]
+
+# WIP: benchmarking latency on 100K TPS target [2026-02-05T09:39:02]
