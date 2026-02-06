@@ -284,3 +284,21 @@ def load_config(
             else:
                 raw[section] = values
     return build_config(raw)
+
+
+def config_to_dict(cfg: Config) -> dict[str, Any]:
+    """Round-trip a config back to plain YAML-ready structure."""
+    data = asdict(cfg)
+    data["features"]["velocity_windows_hours"] = list(cfg.features.velocity_windows_hours)
+    return data
+
+
+def describe_config(cfg: Config) -> str:
+    """One-line human summary used by the training CLI."""
+    return (
+        f"cards={cfg.data.n_cards} days={cfg.data.n_days} "
+        f"fraud_rate={cfg.data.base_fraud_rate:.3%} "
+        f"windows={cfg.features.velocity_windows_hours} "
+        f"trees={cfg.model.n_estimators} "
+        f"fp_cost={cfg.cost.false_positive_cost:g} fn_cost={cfg.cost.fraud_loss_cost:g}"
+    )
