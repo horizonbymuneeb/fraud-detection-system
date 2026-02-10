@@ -320,3 +320,5 @@ if __name__ == '__main__':
 # Add logging for prediction audit trail [2026-02-05T09:24:55]
 
 # WIP: benchmarking latency on 100K TPS target [2026-02-05T09:39:02]
+
+# Implement cross-validation for time series [2026-02-10T17:20:40]
