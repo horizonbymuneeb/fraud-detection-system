@@ -33,3 +33,41 @@ class CostMatrix:
     def missed_fraud_cost(self, amount: float | np.ndarray) -> np.ndarray:
         """Cost of letting a fraud of this amount through (fee + loss)."""
         return self.fraud_loss_cost + self.amount_loss_multiplier * np.asarray(amount, dtype=np.float64)
+
+
+def cost_matrix_from_config(cfg: object) -> CostMatrix:
+    """Build a :class:`CostMatrix` from a loaded ``Config``."""
+    cost = getattr(cfg, "cost")
+    return CostMatrix(
+        false_positive_cost=float(cost.false_positive_cost),
+        fraud_loss_cost=float(cost.fraud_loss_cost),
+        amount_loss_multiplier=float(cost.amount_loss_multiplier),
+    )
+
+
+def expected_loss(
+    amounts: np.ndarray,
+    labels: np.ndarray,
+    scores: np.ndarray,
+    threshold: float,
+    matrix: CostMatrix,
+) -> float:
+    """Total expected loss at one threshold.
+
+    ``sum over false positives of fp_cost + sum over missed frauds of
+    (fraud_loss_cost + amount * multiplier)``.
+    """
+    amounts = np.asarray(amounts, dtype=np.float64)
+    labels = np.asarray(labels).astype(int)
+    scores = np.asarray(scores, dtype=np.float64)
+    if not (len(amounts) == len(labels) == len(scores)):
+        raise ValueError("amounts, labels and scores must be the same length")
+    if not 0.0 <= threshold <= 1.0:
+        raise ValueError("threshold must be in [0, 1]")
+    flagged = scores >= threshold
+    false_positives = int((flagged & (labels == 0)).sum())
+    missed = (~flagged) & (labels == 1)
+    return float(
+        false_positives * matrix.false_positive_cost
+        + matrix.missed_fraud_cost(amounts[missed]).sum()
+    )
