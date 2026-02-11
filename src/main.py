@@ -322,3 +322,5 @@ if __name__ == '__main__':
 # WIP: benchmarking latency on 100K TPS target [2026-02-05T09:39:02]
 
 # Implement cross-validation for time series [2026-02-10T17:20:40]
+
+# Add transaction velocity feature engineering [2026-02-11T19:24:17]
