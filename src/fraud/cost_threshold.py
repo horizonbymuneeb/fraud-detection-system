@@ -71,3 +71,59 @@ def expected_loss(
         false_positives * matrix.false_positive_cost
         + matrix.missed_fraud_cost(amounts[missed]).sum()
     )
+
+
+def loss_curve(
+    amounts: np.ndarray,
+    labels: np.ndarray,
+    scores: np.ndarray,
+    matrix: CostMatrix,
+) -> pd.DataFrame:
+    """Expected loss for every distinct threshold in the score distribution."""
+    amounts = np.asarray(amounts, dtype=np.float64)
+    labels = np.asarray(labels).astype(int)
+    scores = np.asarray(scores, dtype=np.float64)
+    if len(amounts) == 0:
+        raise ValueError("cannot build a loss curve from zero rows")
+    order = np.argsort(scores, kind="mergesort")
+    sorted_scores = scores[order]
+    sorted_labels = labels[order]
+    sorted_amounts = amounts[order]
+    positive = sorted_labels == 1
+    cumulative_pos = np.cumsum(positive)
+    cumulative_pos_amount = np.cumsum(sorted_amounts * positive)
+    total_positive = int(positive.sum())
+    n = len(sorted_scores)
+    thresholds = np.unique(sorted_scores)
+    rows: list[dict[str, float]] = []
+    for threshold in thresholds:
+        idx = int(np.searchsorted(sorted_scores, threshold, side="left"))
+        positives_below = int(cumulative_pos[idx - 1]) if idx > 0 else 0
+        amount_below = float(cumulative_pos_amount[idx - 1]) if idx > 0 else 0.0
+        tp = total_positive - positives_below
+        flagged = n - idx
+        fp = flagged - tp
+        fn = positives_below
+        loss = (
+            fp * matrix.false_positive_cost
+            + fn * matrix.fraud_loss_cost
+            + amount_below * matrix.amount_loss_multiplier
+        )
+        rows.append(
+            {
+                "threshold": float(threshold),
+                "fp": float(fp),
+                "fn": float(fn),
+                "loss": float(loss),
+                "loss_per_txn": float(loss / n),
+            }
+        )
+    return pd.DataFrame(rows)
+
+
+def optimal_threshold(curve: pd.DataFrame) -> tuple[float, float]:
+    """Threshold with the lowest expected loss; ties break to the higher one."""
+    if curve.empty:
+        raise ValueError("loss curve is empty")
+    best = curve.loc[curve["loss"].idxmin()]
+    return float(best["threshold"]), float(best["loss"])

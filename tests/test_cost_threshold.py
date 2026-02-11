@@ -14,3 +14,5 @@ from src.fraud.cost_threshold import (
     optimal_threshold,
     tune_threshold,
 )
+
+AMOUNTS = np.array([100.0, 200.0])
