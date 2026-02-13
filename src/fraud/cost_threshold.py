@@ -127,3 +127,48 @@ def optimal_threshold(curve: pd.DataFrame) -> tuple[float, float]:
         raise ValueError("loss curve is empty")
     best = curve.loc[curve["loss"].idxmin()]
     return float(best["threshold"]), float(best["loss"])
+
+
+def break_even_probability(matrix: CostMatrix, amount: float = 0.0) -> float:
+    """Probability at which flagging is exactly as costly as not flagging."""
+    missed = float(matrix.missed_fraud_cost(amount))
+    return float(matrix.false_positive_cost / (matrix.false_positive_cost + missed))
+
+
+def tune_threshold(
+    amounts: np.ndarray,
+    labels: np.ndarray,
+    scores: np.ndarray,
+    matrix: CostMatrix,
+) -> dict[str, object]:
+    """Full threshold search returned as a small report."""
+    curve = loss_curve(amounts, labels, scores, matrix)
+    threshold, loss = optimal_threshold(curve)
+    baseline = expected_loss(amounts, labels, scores, 0.5, matrix)
+    return {
+        "threshold": threshold,
+        "expected_loss": loss,
+        "loss_per_txn": loss / len(amounts),
+        "loss_at_half": baseline,
+        "saving_vs_half": baseline - loss,
+        "break_even": break_even_probability(matrix, float(np.mean(amounts))),
+    }
+
+
+def compare_thresholds(
+    amounts: np.ndarray,
+    labels: np.ndarray,
+    scores: np.ndarray,
+    matrix: CostMatrix,
+    thresholds: tuple[float, ...] = (0.1, 0.25, 0.5, 0.75, 0.9),
+) -> pd.DataFrame:
+    """Expected loss at a fixed set of candidate thresholds."""
+    rows = [
+        {
+            "threshold": t,
+            "loss": expected_loss(amounts, labels, scores, t, matrix),
+            "flagged": int((np.asarray(scores) >= t).sum()),
+        }
+        for t in thresholds
+    ]
+    return pd.DataFrame(rows)
