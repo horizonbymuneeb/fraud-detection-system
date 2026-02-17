@@ -172,3 +172,12 @@ def compare_thresholds(
         for t in thresholds
     ]
     return pd.DataFrame(rows)
+
+
+def implied_review_budget(curve: pd.DataFrame, n_transactions: int) -> pd.DataFrame:
+    """Attach an alert-volume column to a loss curve for operations planning."""
+    if "fp" not in curve or "fn" not in curve:
+        raise ValueError("curve must come from loss_curve")
+    out = curve.copy()
+    out["alerts"] = (out["fp"] + (n_transactions * 0.005) - out["fn"]).clip(lower=0)
+    return out
