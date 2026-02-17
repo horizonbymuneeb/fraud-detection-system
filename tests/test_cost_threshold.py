@@ -17,3 +17,4 @@ from src.fraud.cost_threshold import (
 
 AMOUNTS = np.array([100.0, 200.0])
 LABELS = np.array([1, 0])
+SCORES = np.array([0.9, 0.2])
