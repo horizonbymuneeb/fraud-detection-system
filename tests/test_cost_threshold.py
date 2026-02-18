@@ -18,3 +18,4 @@ from src.fraud.cost_threshold import (
 AMOUNTS = np.array([100.0, 200.0])
 LABELS = np.array([1, 0])
 SCORES = np.array([0.9, 0.2])
+MATRIX = CostMatrix(false_positive_cost=10.0, fraud_loss_cost=50.0, amount_loss_multiplier=1.0)

@@ -35,3 +35,35 @@ def load_bundle(model_path: str) -> dict[str, object]:
     if not bundle.get("feature_names"):
         raise ValueError("model bundle has no feature_names")
     return bundle
+
+
+def run_evaluation(
+    bundle: dict[str, object], cfg: Config, data_path: str, manifest_path: str | Path
+) -> dict[str, object]:
+    """Recompute the test-split metrics for a saved model."""
+    frame = read_transactions(data_path)
+    validate_transactions(frame)
+    datasets = prepare_datasets(frame, cfg)
+    model = bundle["model"]
+    scores = predict_scores(model, datasets["X_test"])
+    matrix = cost_matrix_from_config(cfg)
+    threshold = float(bundle.get("metadata", {}).get("threshold", 0.5))
+    report = summary_report(datasets["y_test"], scores, threshold, fp_budget=int(0.001 * len(scores)))
+    report["threshold_curve"] = compare_thresholds(
+        datasets["amount_test"], datasets["y_test"], scores, matrix
+    ).to_dict(orient="records")
+    report["calibration"] = calibration_table(datasets["y_test"], scores).to_dict(orient="records")
+    report["manifest"] = load_manifest(manifest_path).get("n_features")
+    return report
+
+
+def main(argv: list[str] | None = None) -> int:
+    """Load, evaluate, write the JSON report and print the headline numbers."""
+    args = build_argument_parser().parse_args(argv)
+    cfg = load_config(args.config)
+    bundle = load_bundle(args.model)
+    report = run_evaluation(bundle, cfg, args.data, Path(args.model).parent / "feature_manifest.json")
+    dump_json(args.output, report)
+    print(json.dumps({k: report[k] for k in ("n", "positives", "precision", "recall", "threshold") if k in report}, indent=2))
+    print(f"report: {args.output}")
+    return 0
