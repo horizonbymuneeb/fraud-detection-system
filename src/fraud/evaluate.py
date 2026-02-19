@@ -67,3 +67,7 @@ def main(argv: list[str] | None = None) -> int:
     print(json.dumps({k: report[k] for k in ("n", "positives", "precision", "recall", "threshold") if k in report}, indent=2))
     print(f"report: {args.output}")
     return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
