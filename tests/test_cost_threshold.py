@@ -47,3 +47,22 @@ def test_loss_curve_thresholds_and_optimum():
     assert threshold == 0.9 and loss == 0.0
     with pytest.raises(ValueError):
         optimal_threshold(pd.DataFrame({"threshold": [], "loss": []}))
+
+
+def test_loss_curve_rejects_empty_input():
+    with pytest.raises(ValueError):
+        loss_curve(np.array([]), np.array([]), np.array([]), MATRIX)
+
+
+def test_break_even_probability():
+    assert break_even_probability(MATRIX) == pytest.approx(10.0 / 60.0)
+    assert break_even_probability(CostMatrix(1.0, 1.0, 0.0)) == 0.5
+
+
+def test_tune_threshold_reports_saving_against_half():
+    report = tune_threshold(AMOUNTS, LABELS, SCORES, MATRIX)
+    assert report["threshold"] == 0.9
+    assert report["expected_loss"] == 0.0
+    assert report["loss_at_half"] == 0.0
+    assert report["saving_vs_half"] == 0.0
+    assert 0.0 < report["break_even"] < 1.0

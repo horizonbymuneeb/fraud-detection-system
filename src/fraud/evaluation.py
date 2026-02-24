@@ -34,3 +34,56 @@ def precision_at_k(labels: np.ndarray, scores: np.ndarray, k: int) -> float:
     k = min(k, len(labels))
     top = np.argsort(-scores, kind="mergesort")[:k]
     return float(labels[top].mean())
+
+
+def recall_at_k(labels: np.ndarray, scores: np.ndarray, k: int) -> float:
+    """Share of all frauds captured by the top ``k`` scores."""
+    labels, scores = _validate(labels, scores)
+    if k < 1:
+        raise ValueError("k must be >= 1")
+    positives = int(labels.sum())
+    if positives == 0:
+        raise ValueError("no positives to recall")
+    k = min(k, len(labels))
+    top = np.argsort(-scores, kind="mergesort")[:k]
+    return float(labels[top].sum() / positives)
+
+
+def threshold_at_fp_budget(labels: np.ndarray, scores: np.ndarray, fp_budget: int) -> float:
+    """Highest threshold whose flagged count (all of it false positives) fits."""
+    labels, scores = _validate(labels, scores)
+    if fp_budget < 0:
+        raise ValueError("fp_budget must be non-negative")
+    order = np.argsort(-scores, kind="mergesort")
+    sorted_scores = scores[order]
+    sorted_labels = labels[order]
+    flagged = 0
+    false_positives = 0
+    threshold = float(np.nextafter(sorted_scores.max(), np.inf))
+    for score, label in zip(sorted_scores, sorted_labels):
+        next_fp = false_positives + (1 - int(label))
+        if next_fp > fp_budget:
+            break
+        flagged += 1
+        false_positives = next_fp
+        threshold = float(score)
+    if flagged == 0:
+        return float(np.nextafter(sorted_scores.max(), np.inf))
+    return threshold
+
+
+def recall_at_fp_budget(labels: np.ndarray, scores: np.ndarray, fp_budget: int) -> dict[str, float]:
+    """Recall and precision achievable without exceeding ``fp_budget`` alerts."""
+    labels, scores = _validate(labels, scores)
+    threshold = threshold_at_fp_budget(labels, scores, fp_budget)
+    flagged = scores >= threshold
+    tp = int((flagged & (labels == 1)).sum())
+    fp = int((flagged & (labels == 0)).sum())
+    positives = int(labels.sum())
+    return {
+        "threshold": threshold,
+        "recall": float(tp / positives) if positives else 0.0,
+        "precision": float(tp / max(tp + fp, 1)),
+        "alerts": int(flagged.sum()),
+        "false_positives": fp,
+    }
