@@ -66,3 +66,19 @@ def test_tune_threshold_reports_saving_against_half():
     assert report["loss_at_half"] == 0.0
     assert report["saving_vs_half"] == 0.0
     assert 0.0 < report["break_even"] < 1.0
+
+
+def test_compare_thresholds_frame():
+    table = compare_thresholds(AMOUNTS, LABELS, SCORES, MATRIX, thresholds=(0.1, 0.5))
+    assert table["threshold"].tolist() == [0.1, 0.5]
+    assert table["loss"].tolist() == [10.0, 0.0]
+    assert table["flagged"].tolist() == [2, 1]
+
+
+def test_cost_matrix_from_config():
+    from src.fraud.config import load_config
+
+    cfg = load_config("config.yaml")
+    matrix = cost_matrix_from_config(cfg)
+    assert matrix.false_positive_cost == cfg.cost.false_positive_cost
+    assert matrix.fraud_loss_cost == cfg.cost.fraud_loss_cost

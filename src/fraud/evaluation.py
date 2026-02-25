@@ -87,3 +87,19 @@ def recall_at_fp_budget(labels: np.ndarray, scores: np.ndarray, fp_budget: int) 
         "alerts": int(flagged.sum()),
         "false_positives": fp,
     }
+
+
+def roc_auc(labels: np.ndarray, scores: np.ndarray) -> float:
+    """Area under the ROC curve; raises when only one class is present."""
+    labels, scores = _validate(labels, scores)
+    if labels.min() == labels.max():
+        raise ValueError("ROC AUC needs both classes")
+    return float(roc_auc_score(labels, scores))
+
+
+def average_precision(labels: np.ndarray, scores: np.ndarray) -> float:
+    """Area under the precision-recall curve (sklearn's average precision)."""
+    labels, scores = _validate(labels, scores)
+    if labels.sum() == 0:
+        raise ValueError("average precision needs at least one positive")
+    return float(average_precision_score(labels, scores))
