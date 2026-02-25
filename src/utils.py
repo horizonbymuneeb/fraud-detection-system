@@ -191,3 +191,5 @@ def format_number(n: int) -> str:
 # Add anomaly detection as backup classifier [2026-02-17T12:10:28]
 
 # Fix timestamp feature extraction timezone bug [2026-02-18T16:04:13]
+
+# Update deployment scripts for Docker container [2026-02-25T09:39:05]
