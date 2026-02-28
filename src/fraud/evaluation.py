@@ -103,3 +103,35 @@ def average_precision(labels: np.ndarray, scores: np.ndarray) -> float:
     if labels.sum() == 0:
         raise ValueError("average precision needs at least one positive")
     return float(average_precision_score(labels, scores))
+
+
+def confusion_counts(labels: np.ndarray, scores: np.ndarray, threshold: float) -> dict[str, int]:
+    """TP/FP/TN/FN at one probability threshold."""
+    labels, scores = _validate(labels, scores)
+    if not 0.0 <= threshold <= 1.0:
+        raise ValueError("threshold must be in [0, 1]")
+    flagged = scores >= threshold
+    return {
+        "tp": int((flagged & (labels == 1)).sum()),
+        "fp": int((flagged & (labels == 0)).sum()),
+        "tn": int((~flagged & (labels == 0)).sum()),
+        "fn": int((~flagged & (labels == 1)).sum()),
+    }
+
+
+def per_fraud_type_recall(
+    fraud_types: pd.Series, labels: np.ndarray, scores: np.ndarray, threshold: float
+) -> dict[str, float]:
+    """Recall per injected pattern; legitimate rows keep ``None``."""
+    labels, scores = _validate(labels, scores)
+    types = fraud_types.reset_index(drop=True)
+    if len(types) != len(labels):
+        raise ValueError("fraud_types must align with labels")
+    flagged = scores >= threshold
+    report: dict[str, float] = {}
+    for fraud_type in sorted(types.dropna().unique()):
+        mask = (types == fraud_type).to_numpy()
+        total = int(mask.sum())
+        if total:
+            report[str(fraud_type)] = float(flagged[mask].sum() / total)
+    return report
