@@ -135,3 +135,39 @@ def per_fraud_type_recall(
         if total:
             report[str(fraud_type)] = float(flagged[mask].sum() / total)
     return report
+
+
+def top_fraction_lift(labels: np.ndarray, scores: np.ndarray, fraction: float = 0.01) -> float:
+    """Precision in the top ``fraction`` of scores divided by the base rate."""
+    labels, scores = _validate(labels, scores)
+    if not 0.0 < fraction <= 1.0:
+        raise ValueError("fraction must be in (0, 1]")
+    prior = float(labels.mean())
+    if prior == 0.0:
+        raise ValueError("no positives; lift is undefined")
+    k = max(1, int(round(len(labels) * fraction)))
+    return float(precision_at_k(labels, scores, k) / prior)
+
+
+def calibration_table(labels: np.ndarray, scores: np.ndarray, n_bins: int = 10) -> pd.DataFrame:
+    """Observed vs predicted fraud rate per score decile."""
+    labels, scores = _validate(labels, scores)
+    if n_bins < 2:
+        raise ValueError("n_bins must be >= 2")
+    edges = np.quantile(scores, np.linspace(0, 1, n_bins + 1))
+    edges[-1] = np.nextafter(edges[-1], np.inf)
+    rows = []
+    for low, high in zip(edges[:-1], edges[1:]):
+        mask = (scores >= low) & (scores < high)
+        if not mask.any():
+            continue
+        rows.append(
+            {
+                "bin_low": float(low),
+                "bin_high": float(high),
+                "count": int(mask.sum()),
+                "predicted": float(scores[mask].mean()),
+                "observed": float(labels[mask].mean()),
+            }
+        )
+    return pd.DataFrame(rows)
