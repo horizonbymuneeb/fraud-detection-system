@@ -171,3 +171,29 @@ def calibration_table(labels: np.ndarray, scores: np.ndarray, n_bins: int = 10) 
             }
         )
     return pd.DataFrame(rows)
+
+
+def summary_report(
+    labels: np.ndarray,
+    scores: np.ndarray,
+    threshold: float,
+    fp_budget: int,
+) -> dict[str, object]:
+    """Everything a reviewer wants on one screen."""
+    confusion = confusion_counts(labels, scores, threshold)
+    positives = int(np.asarray(labels).sum())
+    report: dict[str, object] = {
+        "n": int(len(labels)),
+        "positives": positives,
+        "prior": float(np.mean(labels)),
+        "threshold": float(threshold),
+        "confusion": confusion,
+        "precision": confusion["tp"] / max(confusion["tp"] + confusion["fp"], 1),
+        "recall": confusion["tp"] / max(positives, 1),
+        "fp_budget": int(fp_budget),
+        "at_fp_budget": recall_at_fp_budget(labels, scores, fp_budget),
+    }
+    if 0 < positives < len(labels):
+        report["roc_auc"] = roc_auc(labels, scores)
+        report["average_precision"] = average_precision(labels, scores)
+    return report
