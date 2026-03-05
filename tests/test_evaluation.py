@@ -17,3 +17,5 @@ from src.fraud.evaluation import (
     threshold_at_fp_budget,
     top_fraction_lift,
 )
+
+LABELS = np.array([0, 1, 0, 1])

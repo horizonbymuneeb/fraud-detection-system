@@ -20,3 +20,19 @@ from .config import Config
 from .features_behaviour import behaviour_features_for_config
 from .features_context import context_features_for_config, fit_category_frequency
 from .features_velocity import velocity_features_for_config
+
+GROUP_PREFIX = {"vel_": "velocity", "dev_": "behaviour", "ctx_": "context"}
+MANIFEST_FILENAME = "feature_manifest.json"
+
+
+def assemble_feature_frame(
+    frame: pd.DataFrame, cfg: Config, category_frequency: pd.Series | None = None
+) -> pd.DataFrame:
+    """Concatenate the three feature blocks, in a fixed column order."""
+    blocks = [
+        velocity_features_for_config(frame, cfg),
+        behaviour_features_for_config(frame, cfg),
+        context_features_for_config(frame, cfg, category_frequency),
+    ]
+    features = pd.concat(blocks, axis=1)
+    return features[feature_columns(cfg)]
