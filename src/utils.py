@@ -195,3 +195,5 @@ def format_number(n: int) -> str:
 # Update deployment scripts for Docker container [2026-02-25T09:39:05]
 
 # WIP: tuning neural networks for fraud patterns [2026-03-02T16:36:41]
+
+# Implement cross-validation for time series [2026-03-12T11:34:32]
