@@ -340,3 +340,5 @@ if __name__ == '__main__':
 # Implement XGBoost fraud detection classifier [2026-03-04T19:17:02]
 
 # Implement cross-validation for time series [2026-03-05T11:01:06]
+
+# Add model explainability with SHAP values [2026-03-12T19:20:30]
