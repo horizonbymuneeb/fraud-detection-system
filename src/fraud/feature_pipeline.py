@@ -54,3 +54,39 @@ def feature_group(name: str) -> str:
         if name.startswith(prefix):
             return group
     raise ValueError(f"feature name has no known prefix: {name}")
+
+
+def split_masks(frame: pd.DataFrame, cfg: Config) -> tuple[np.ndarray, np.ndarray]:
+    """Boolean train/test masks matching :func:`generator.chronological_split`.
+
+    The gap is expressed in hours: test rows inside the gap after the boundary
+    are excluded so each test row has at least a 7-day velocity history.
+    """
+    ordered = frame.sort_values("timestamp", kind="mergesort")
+    n = len(ordered)
+    if n < 2:
+        raise ValueError("need at least two rows to split")
+    boundary = int(n * cfg.split.train_fraction)
+    boundary = min(max(boundary, 1), n - 1)
+    boundary_ts = ordered["timestamp"].iloc[boundary]
+    test_start = boundary_ts + pd.Timedelta(hours=cfg.split.boundary_gap_hours)
+    train_mask = np.zeros(len(frame), dtype=bool)
+    test_mask = np.zeros(len(frame), dtype=bool)
+    train_positions = ordered.index[:boundary].to_numpy() if not isinstance(
+        ordered.index, pd.RangeIndex
+    ) else ordered.index[:boundary].to_numpy()
+    train_mask[train_positions] = True
+    test_positions = ordered.index[ordered["timestamp"] >= test_start].to_numpy()
+    test_mask[test_positions] = True
+    test_mask &= ~train_mask
+    return train_mask, test_mask
+
+
+def fit_imputer(features: pd.DataFrame) -> dict[str, float]:
+    """Column medians from the training window; all-NaN columns impute to 0."""
+    medians: dict[str, float] = {}
+    for column in features.columns:
+        values = features[column].to_numpy(dtype=np.float64)
+        finite = values[np.isfinite(values)]
+        medians[column] = float(np.median(finite)) if finite.size else 0.0
+    return medians
