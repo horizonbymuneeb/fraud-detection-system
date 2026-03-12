@@ -36,3 +36,21 @@ def assemble_feature_frame(
     ]
     features = pd.concat(blocks, axis=1)
     return features[feature_columns(cfg)]
+
+
+def feature_columns(cfg: Config | None = None) -> list[str]:
+    """Every model feature, in the order the model will see it."""
+    from .features_behaviour import behaviour_columns
+    from .features_context import context_columns
+    from .features_velocity import velocity_columns
+
+    windows = cfg.features.velocity_windows_hours if cfg else (1, 24, 168)
+    return velocity_columns(windows) + behaviour_columns() + context_columns()
+
+
+def feature_group(name: str) -> str:
+    """Group a feature name by its prefix, for per-group importance rollups."""
+    for prefix, group in GROUP_PREFIX.items():
+        if name.startswith(prefix):
+            return group
+    raise ValueError(f"feature name has no known prefix: {name}")

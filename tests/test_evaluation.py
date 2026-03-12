@@ -19,3 +19,4 @@ from src.fraud.evaluation import (
 )
 
 LABELS = np.array([0, 1, 0, 1])
+SCORES = np.array([0.9, 0.8, 0.7, 0.6])
