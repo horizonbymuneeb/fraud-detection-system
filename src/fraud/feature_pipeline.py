@@ -90,3 +90,24 @@ def fit_imputer(features: pd.DataFrame) -> dict[str, float]:
         finite = values[np.isfinite(values)]
         medians[column] = float(np.median(finite)) if finite.size else 0.0
     return medians
+
+
+def apply_imputer(features: pd.DataFrame, medians: dict[str, float]) -> pd.DataFrame:
+    """Fill non-finite values with the fitted per-column medians."""
+    out = features.copy()
+    for column, value in medians.items():
+        if column in out:
+            out[column] = out[column].fillna(value).replace([np.inf, -np.inf], value)
+    return out
+
+
+def fit_clipper(features: pd.DataFrame, quantile: float) -> dict[str, float]:
+    """Upper winsorising bound per column, fitted on the training window."""
+    if not 0.5 <= quantile <= 1.0:
+        raise ValueError("quantile must be in [0.5, 1]")
+    bounds: dict[str, float] = {}
+    for column in features.columns:
+        values = features[column].to_numpy(dtype=np.float64)
+        finite = values[np.isfinite(values)]
+        bounds[column] = float(np.quantile(finite, quantile)) if finite.size else 0.0
+    return bounds

@@ -55,3 +55,29 @@ def test_roc_auc_and_average_precision():
         roc_auc(np.zeros(4, dtype=int), SCORES)
     with pytest.raises(ValueError):
         average_precision(np.zeros(4, dtype=int), SCORES)
+
+
+def test_confusion_counts_exact():
+    counts = confusion_counts(LABELS, SCORES, 0.65)
+    assert counts == {"tp": 1, "fp": 2, "tn": 0, "fn": 1}
+    with pytest.raises(ValueError):
+        confusion_counts(LABELS, SCORES, -0.1)
+
+
+def test_per_pattern_recall():
+    types = pd.Series([None, "velocity", None, "geo"])
+    report = per_fraud_type_recall(types, LABELS, SCORES, 0.65)
+    assert report == {"geo": 0.0, "velocity": 1.0}
+    report_missed = per_fraud_type_recall(types, LABELS, SCORES, 0.85)
+    assert report_missed["geo"] == 0.0
+    assert per_fraud_type_recall(types, LABELS, SCORES, 0.55)["geo"] == 1.0
+    with pytest.raises(ValueError):
+        per_fraud_type_recall(pd.Series(["x"]), LABELS, SCORES, 0.5)
+
+
+def test_top_fraction_lift():
+    labels = np.array([1, 1, 0, 0])
+    scores = np.array([0.9, 0.8, 0.1, 0.0])
+    assert top_fraction_lift(labels, scores, 0.5) == pytest.approx(2.0)
+    with pytest.raises(ValueError):
+        top_fraction_lift(labels, scores, 0.0)
