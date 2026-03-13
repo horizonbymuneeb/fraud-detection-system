@@ -197,3 +197,5 @@ def format_number(n: int) -> str:
 # WIP: tuning neural networks for fraud patterns [2026-03-02T16:36:41]
 
 # Implement cross-validation for time series [2026-03-12T11:34:32]
+
+# Implement XGBoost fraud detection classifier [2026-03-13T18:16:33]
