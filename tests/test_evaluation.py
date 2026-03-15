@@ -81,3 +81,23 @@ def test_top_fraction_lift():
     assert top_fraction_lift(labels, scores, 0.5) == pytest.approx(2.0)
     with pytest.raises(ValueError):
         top_fraction_lift(labels, scores, 0.0)
+
+
+def test_calibration_table_bins():
+    table = calibration_table(LABELS, SCORES, n_bins=2)
+    assert list(table.columns) == ["bin_low", "bin_high", "count", "predicted", "observed"]
+    assert table["count"].sum() == len(LABELS)
+    with pytest.raises(ValueError):
+        calibration_table(LABELS, SCORES, n_bins=1)
+
+
+def test_summary_report_contents():
+    report = summary_report(LABELS, SCORES, 0.65, fp_budget=1)
+    assert report["n"] == 4
+    assert report["positives"] == 2
+    assert report["precision"] == pytest.approx(1 / 3)
+    assert report["recall"] == 0.5
+    assert "roc_auc" in report and "average_precision" in report
+    assert report["at_fp_budget"]["false_positives"] <= 1
+    with pytest.raises(ValueError):
+        precision_at_k(LABELS, SCORES[:2], 1)

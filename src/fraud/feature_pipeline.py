@@ -168,3 +168,51 @@ def prepare_datasets(frame: pd.DataFrame, cfg: Config) -> dict[str, object]:
         "category_frequency": category_frequency,
         "features": features,
     }
+
+
+def assert_no_future_leakage(
+    frame: pd.DataFrame, cfg: Config, sample_rows: int = 3, seed: int = 0
+) -> bool:
+    """Recompute a sampled row's features from its card's past and compare.
+
+    Velocity, behaviour, novelty and risk features of a transaction depend only
+    on earlier rows *of the same card* (category frequency is passed in fixed),
+    so truncating the rest of the frame must not change the sampled row. If it
+    does, some feature is looking at the future and the assertion names it.
+    """
+    if sample_rows < 1:
+        raise ValueError("sample_rows must be >= 1")
+    ordered = frame.sort_values("timestamp", kind="mergesort").reset_index(drop=True)
+    if len(ordered) < 3:
+        raise ValueError("need at least three rows to check for leakage")
+    frequency = fit_category_frequency(ordered)
+    full = assemble_feature_frame(ordered, cfg, frequency)
+    rng = np.random.default_rng(seed)
+    candidates = np.arange(1, len(ordered))
+    chosen = np.sort(
+        rng.choice(candidates, size=min(sample_rows, len(candidates)), replace=False)
+    )
+    cards = ordered["card_id"].to_numpy()
+    for row in chosen:
+        row = int(row)
+        card_positions = np.flatnonzero(cards == cards[row])
+        prefix = ordered.iloc[card_positions[card_positions <= row]]
+        prefix_features = assemble_feature_frame(prefix, cfg, frequency)
+        expected = full.iloc[row].to_numpy(dtype=np.float64)
+        actual = prefix_features.iloc[-1].to_numpy(dtype=np.float64)
+        if not np.allclose(expected, actual, equal_nan=True, rtol=1e-12, atol=1e-12):
+            bad = [
+                column
+                for column, left, right in zip(full.columns, expected, actual)
+                if not np.isclose(left, right, equal_nan=True)
+            ]
+            raise AssertionError(f"future leakage at row {row} (card {cards[row]}): {bad}")
+    return True
+
+
+def feature_manifest(cfg: Config) -> list[dict[str, object]]:
+    """Structured description of every feature, written next to the model."""
+    return [
+        {"name": name, "group": feature_group(name), "source": "config.yaml"}
+        for name in feature_columns(cfg)
+    ]
