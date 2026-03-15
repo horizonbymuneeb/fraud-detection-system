@@ -111,3 +111,60 @@ def fit_clipper(features: pd.DataFrame, quantile: float) -> dict[str, float]:
         finite = values[np.isfinite(values)]
         bounds[column] = float(np.quantile(finite, quantile)) if finite.size else 0.0
     return bounds
+
+
+def apply_clipper(features: pd.DataFrame, bounds: dict[str, float]) -> pd.DataFrame:
+    """Clip each column at its fitted upper bound."""
+    out = features.copy()
+    for column, bound in bounds.items():
+        if column in out:
+            out[column] = out[column].clip(upper=bound)
+    return out
+
+
+def make_xy(features: pd.DataFrame, frame: pd.DataFrame, mask: np.ndarray) -> tuple[pd.DataFrame, np.ndarray]:
+    """Select rows by ``mask`` and return ``(X, y)`` with the label as int8."""
+    if len(features) != len(frame):
+        raise ValueError("features and frame must have the same length")
+    if mask.dtype != bool or mask.shape != (len(frame),):
+        raise ValueError("mask must be a boolean array matching the frame")
+    if mask.sum() == 0:
+        raise ValueError("mask selects no rows")
+    X = features.loc[mask].reset_index(drop=True)
+    y = frame.loc[mask, "is_fraud"].to_numpy(dtype=np.int8)
+    return X, y
+
+
+def prepare_datasets(frame: pd.DataFrame, cfg: Config) -> dict[str, object]:
+    """Build features, fit train-only transforms and produce both splits.
+
+    Returns a dict with ``X_train``, ``y_train``, ``X_test``, ``y_test`` plus
+    the fitted ``medians``/``bounds`` and ``category_frequency`` so a scorer can
+    reproduce the exact transform later.
+    """
+    train_mask, test_mask = split_masks(frame, cfg)
+    category_frequency = fit_category_frequency(frame.loc[train_mask])
+    features = assemble_feature_frame(frame, cfg, category_frequency)
+    X_train_raw, y_train = make_xy(features, frame, train_mask)
+    X_test_raw, y_test = make_xy(features, frame, test_mask)
+    medians = fit_imputer(X_train_raw)
+    bounds = fit_clipper(
+        apply_imputer(X_train_raw, medians), cfg.features.clip_quantile_high
+    )
+    X_train = apply_clipper(apply_imputer(X_train_raw, medians), bounds)
+    X_test = apply_clipper(apply_imputer(X_test_raw, medians), bounds)
+    return {
+        "X_train": X_train,
+        "y_train": y_train,
+        "X_test": X_test,
+        "y_test": y_test,
+        "amount_train": frame.loc[train_mask, "amount"].to_numpy(dtype=np.float64),
+        "amount_test": frame.loc[test_mask, "amount"].to_numpy(dtype=np.float64),
+        "fraud_types_test": frame.loc[test_mask, "fraud_type"],
+        "train_mask": train_mask,
+        "test_mask": test_mask,
+        "medians": medians,
+        "bounds": bounds,
+        "category_frequency": category_frequency,
+        "features": features,
+    }
