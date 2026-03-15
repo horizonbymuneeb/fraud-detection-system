@@ -201,3 +201,5 @@ def format_number(n: int) -> str:
 # Implement XGBoost fraud detection classifier [2026-03-13T18:16:33]
 
 # Fix timestamp feature extraction timezone bug [2026-03-15T15:08:07]
+
+# WIP: debugging SMOTE class imbalance handling [2026-03-15T18:45:38]
