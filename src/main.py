@@ -342,3 +342,5 @@ if __name__ == '__main__':
 # Implement cross-validation for time series [2026-03-05T11:01:06]
 
 # Add model explainability with SHAP values [2026-03-12T19:20:30]
+
+# Update feature pipeline for real-time scoring [2026-03-17T17:40:19]
