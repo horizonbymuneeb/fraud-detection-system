@@ -216,3 +216,24 @@ def feature_manifest(cfg: Config) -> list[dict[str, object]]:
         {"name": name, "group": feature_group(name), "source": "config.yaml"}
         for name in feature_columns(cfg)
     ]
+
+
+def save_manifest(path: str | Path, cfg: Config) -> Path:
+    """Write the feature manifest as JSON (used by the scorer to detect drift)."""
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "n_features": len(feature_columns(cfg)),
+        "features": feature_manifest(cfg),
+        "velocity_windows_hours": list(cfg.features.velocity_windows_hours),
+    }
+    path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    return path
+
+
+def load_manifest(path: str | Path) -> dict[str, object]:
+    """Read a manifest written by :func:`save_manifest`."""
+    path = Path(path)
+    if not path.exists():
+        raise FileNotFoundError(f"manifest not found: {path}")
+    return json.loads(path.read_text(encoding="utf-8"))
