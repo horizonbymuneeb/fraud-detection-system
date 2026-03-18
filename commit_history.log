@@ -341,3 +341,4 @@
 [2026-03-15T15:08:07] Fix timestamp feature extraction timezone bug
 [2026-03-15T18:45:38] WIP: debugging SMOTE class imbalance handling
 [2026-03-17T17:40:19] Update feature pipeline for real-time scoring
+[2026-03-18T11:41:48] WIP: benchmarking latency on 100K TPS target

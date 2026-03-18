@@ -203,3 +203,5 @@ def format_number(n: int) -> str:
 # Fix timestamp feature extraction timezone bug [2026-03-15T15:08:07]
 
 # WIP: debugging SMOTE class imbalance handling [2026-03-15T18:45:38]
+
+# WIP: benchmarking latency on 100K TPS target [2026-03-18T11:41:48]
