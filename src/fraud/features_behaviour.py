@@ -15,3 +15,11 @@ import pandas as pd
 from .config import Config
 
 REQUIRED_COLUMNS = ("card_id", "timestamp", "amount")
+ROUND_INCREMENTS = (1.0, 5.0, 10.0, 50.0, 100.0, 500.0)
+
+
+def zscore(value: float, mean: float, std: float, floor: float) -> float:
+    """Standardised deviation with a floor on the denominator."""
+    if floor <= 0:
+        raise ValueError("floor must be positive")
+    return float((value - mean) / max(std, floor))
