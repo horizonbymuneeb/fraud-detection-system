@@ -205,3 +205,5 @@ def format_number(n: int) -> str:
 # WIP: debugging SMOTE class imbalance handling [2026-03-15T18:45:38]
 
 # WIP: benchmarking latency on 100K TPS target [2026-03-18T11:41:48]
+
+# Add transaction velocity feature engineering [2026-03-23T10:21:54]
