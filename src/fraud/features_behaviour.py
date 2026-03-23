@@ -23,3 +23,23 @@ def zscore(value: float, mean: float, std: float, floor: float) -> float:
     if floor <= 0:
         raise ValueError("floor must be positive")
     return float((value - mean) / max(std, floor))
+
+
+def percentile_rank(sorted_values: list[float], value: float) -> float:
+    """Fraction of prior values strictly below ``value`` (0..1)."""
+    if not sorted_values:
+        return float("nan")
+    return bisect_left(sorted_values, value) / len(sorted_values)
+
+
+def round_increment(amount: float) -> float:
+    """Largest round increment (1/5/10/50/100/500) that divides ``amount``."""
+    for step in reversed(ROUND_INCREMENTS):
+        if amount >= step and abs(amount / step - round(amount / step)) < 1e-9:
+            return step
+    return 0.0
+
+
+def is_round_amount(amount: float) -> bool:
+    """True when the amount is a whole multiple of 50 or 100."""
+    return round_increment(amount) >= 50.0
