@@ -43,3 +43,78 @@ def round_increment(amount: float) -> float:
 def is_round_amount(amount: float) -> bool:
     """True when the amount is a whole multiple of 50 or 100."""
     return round_increment(amount) >= 50.0
+
+
+def card_history_statistics(amounts: np.ndarray) -> dict[str, np.ndarray]:
+    """Prior-only mean/std/median/percentile/maximum for one card's amounts.
+
+    Uses an incremental sorted list so the median and percentile are exact and
+    the whole pass stays O(n log n) rather than O(n^2).
+    """
+    n = len(amounts)
+    out = {
+        "history_count": np.zeros(n, dtype=np.int64),
+        "history_mean": np.full(n, np.nan),
+        "history_std": np.full(n, np.nan),
+        "history_median": np.full(n, np.nan),
+        "history_percentile": np.full(n, np.nan),
+        "history_max": np.full(n, np.nan),
+    }
+    ordered: list[float] = []
+    total = 0.0
+    total_sq = 0.0
+    running_max = -np.inf
+    for i, amount in enumerate(amounts):
+        if i > 0:
+            mean = total / i
+            variance = max(0.0, total_sq / i - mean * mean)
+            out["history_count"][i] = i
+            out["history_mean"][i] = mean
+            out["history_std"][i] = float(np.sqrt(variance))
+            out["history_median"][i] = float(ordered[i // 2]) if i % 2 else float(
+                0.5 * (ordered[i // 2 - 1] + ordered[i // 2])
+            )
+            out["history_percentile"][i] = percentile_rank(ordered, float(amount))
+            out["history_max"][i] = running_max
+        insort(ordered, float(amount))
+        total += float(amount)
+        total_sq += float(amount) ** 2
+        running_max = max(running_max, float(amount))
+    return out
+
+
+def deviation_features(
+    amounts: np.ndarray,
+    stats: dict[str, np.ndarray],
+    min_history: int,
+    zscore_floor: float,
+) -> dict[str, np.ndarray]:
+    """Turn prior-history statistics into model features for the current row."""
+    mean = stats["history_mean"]
+    std = stats["history_std"]
+    median = stats["history_median"]
+    count = stats["history_count"]
+    has_history = count > 0
+
+    z = np.full(len(amounts), np.nan)
+    z[has_history] = (amounts[has_history] - mean[has_history]) / np.maximum(
+        std[has_history], zscore_floor
+    )
+    ratio = np.full(len(amounts), np.nan)
+    usable = has_history & (median > 0)
+    ratio[usable] = amounts[usable] / median[usable]
+    vs_max = np.full(len(amounts), np.nan)
+    vs_max[has_history] = amounts[has_history] / np.maximum(
+        stats["history_max"][has_history], 1.0
+    )
+    return {
+        "dev_zscore": z,
+        "dev_median_ratio": ratio,
+        "dev_vs_max": vs_max,
+        "dev_percentile": stats["history_percentile"],
+        "dev_history_count": count.astype(np.float64),
+        "dev_cold_start": (count < min_history).astype(np.int8),
+        "dev_log_amount": np.log1p(amounts),
+        "dev_is_round": np.array([is_round_amount(float(a)) for a in amounts], dtype=np.int8),
+        "dev_round_increment": np.array([round_increment(float(a)) for a in amounts], dtype=np.float64),
+    }
