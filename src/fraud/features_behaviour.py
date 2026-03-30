@@ -118,3 +118,52 @@ def deviation_features(
         "dev_is_round": np.array([is_round_amount(float(a)) for a in amounts], dtype=np.int8),
         "dev_round_increment": np.array([round_increment(float(a)) for a in amounts], dtype=np.float64),
     }
+
+
+def compute_behaviour_features(
+    frame: pd.DataFrame, min_history: int, zscore_floor: float
+) -> pd.DataFrame:
+    """Return the amount-deviation block aligned with ``frame``'s index."""
+    missing = set(REQUIRED_COLUMNS) - set(frame.columns)
+    if missing:
+        raise ValueError(f"behaviour features need columns: {sorted(missing)}")
+    if min_history < 0:
+        raise ValueError("min_history must be non-negative")
+    working = frame.copy()
+    working["_pos"] = np.arange(len(working))
+    ordered = working.sort_values(["card_id", "timestamp"], kind="mergesort")
+    amounts = frame["amount"].to_numpy(dtype=np.float64)
+    block: dict[str, np.ndarray] = {}
+    for _card, group in ordered.groupby("card_id", sort=False):
+        positions = group["_pos"].to_numpy(dtype=np.int64)
+        stats = card_history_statistics(amounts[positions])
+        feats = deviation_features(amounts[positions], stats, min_history, zscore_floor)
+        for name, values in feats.items():
+            target = block.get(name)
+            if target is None:
+                target = np.zeros(len(frame), dtype=np.float64)
+                block[name] = target
+            target[positions] = values
+    return pd.DataFrame(block, index=frame.index).astype(np.float64)
+
+
+def behaviour_columns() -> list[str]:
+    """Names of the columns :func:`compute_behaviour_features` produces."""
+    return [
+        "dev_zscore",
+        "dev_median_ratio",
+        "dev_vs_max",
+        "dev_percentile",
+        "dev_history_count",
+        "dev_cold_start",
+        "dev_log_amount",
+        "dev_is_round",
+        "dev_round_increment",
+    ]
+
+
+def behaviour_features_for_config(frame: pd.DataFrame, cfg: Config) -> pd.DataFrame:
+    """Compute behaviour features using the tunables from ``config.yaml``."""
+    return compute_behaviour_features(
+        frame, cfg.features.min_history_txns, cfg.features.amount_zscore_floor
+    )

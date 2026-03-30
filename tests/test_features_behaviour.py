@@ -62,3 +62,23 @@ def test_cold_start_clears_after_min_history():
     frame = pd_frame([100.0, 120.0, 90.0, 400.0])
     features = compute_behaviour_features(frame, min_history=3, zscore_floor=5.0)
     assert features["dev_cold_start"].tolist() == [1, 1, 1, 0]
+
+
+def test_behaviour_features_require_columns():
+    frame = pd_frame([10.0])
+    with pytest.raises(ValueError, match="amount"):
+        compute_behaviour_features(frame.drop(columns=["amount"]), 1, 5.0)
+    with pytest.raises(ValueError, match="non-negative"):
+        compute_behaviour_features(frame, -1, 5.0)
+
+
+def pd_frame(amounts):
+    import pandas as pd
+
+    return pd.DataFrame(
+        {
+            "card_id": ["c1"] * len(amounts),
+            "timestamp": pd.date_range("2024-01-01", periods=len(amounts), freq="h"),
+            "amount": amounts,
+        }
+    )
