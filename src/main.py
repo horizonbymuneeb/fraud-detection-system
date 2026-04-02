@@ -352,3 +352,5 @@ if __name__ == '__main__':
 # Update deployment scripts for Docker container [2026-03-27T17:18:30]
 
 # Implement real-time inference with Redis cache [2026-03-30T13:52:54]
+
+# Update feature store integration for batch [2026-04-02T10:01:58]
