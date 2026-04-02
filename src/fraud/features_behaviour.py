@@ -167,3 +167,13 @@ def behaviour_features_for_config(frame: pd.DataFrame, cfg: Config) -> pd.DataFr
     return compute_behaviour_features(
         frame, cfg.features.min_history_txns, cfg.features.amount_zscore_floor
     )
+
+
+def behaviour_summary(features: pd.DataFrame) -> dict[str, float]:
+    """Share of cold-start rows and mean deviation, for logs."""
+    if features.empty:
+        return {}
+    return {
+        "cold_start_share": float(features["dev_cold_start"].mean()),
+        "mean_zscore": float(features["dev_zscore"].mean(skipna=True)),
+    }
