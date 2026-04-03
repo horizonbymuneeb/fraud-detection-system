@@ -14,3 +14,10 @@ from .config import Config
 from .generator import CATEGORY_PROFILES, COUNTRY_RISK
 
 TIME_BUCKETS: tuple[str, ...] = ("night", "morning", "afternoon", "evening")
+NIGHT_HOURS: tuple[int, ...] = (0, 1, 2, 3, 4, 5)
+WEEKEND_DAYS: tuple[int, ...] = (5, 6)
+
+
+def default_category_risk() -> dict[str, float]:
+    """Risk table derived from the generator's category profiles."""
+    return {category: profile[2] for category, profile in CATEGORY_PROFILES.items()}
