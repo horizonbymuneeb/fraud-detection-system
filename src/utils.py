@@ -207,3 +207,5 @@ def format_number(n: int) -> str:
 # WIP: benchmarking latency on 100K TPS target [2026-03-18T11:41:48]
 
 # Add transaction velocity feature engineering [2026-03-23T10:21:54]
+
+# Implement ensemble of XGBoost and RandomForest [2026-04-03T10:07:09]
