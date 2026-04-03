@@ -5,3 +5,12 @@ Time is encoded cyclically (sin/cos) rather than as a raw integer so 23:00 and
 stay interpretable. Merchant-category risk is a fixed domain table, overridable
 from ``config.yaml``; category frequency is fitted on the training window only.
 """
+from __future__ import annotations
+
+import numpy as np
+import pandas as pd
+
+from .config import Config
+from .generator import CATEGORY_PROFILES, COUNTRY_RISK
+
+TIME_BUCKETS: tuple[str, ...] = ("night", "morning", "afternoon", "evening")
