@@ -21,3 +21,20 @@ WEEKEND_DAYS: tuple[int, ...] = (5, 6)
 def default_category_risk() -> dict[str, float]:
     """Risk table derived from the generator's category profiles."""
     return {category: profile[2] for category, profile in CATEGORY_PROFILES.items()}
+
+
+def category_risk_table(overrides: dict[str, float] | None = None) -> dict[str, float]:
+    """Default risk table with config overrides applied on top."""
+    table = default_category_risk()
+    if overrides:
+        for category, value in overrides.items():
+            table[str(category)] = float(value)
+    return table
+
+
+def cyclic_encoding(values: np.ndarray, period: int) -> tuple[np.ndarray, np.ndarray]:
+    """Map integer-valued cyclical features onto the unit circle."""
+    if period <= 1:
+        raise ValueError("period must be > 1")
+    angle = 2.0 * np.pi * np.asarray(values, dtype=np.float64) / period
+    return np.sin(angle), np.cos(angle)
