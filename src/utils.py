@@ -209,3 +209,5 @@ def format_number(n: int) -> str:
 # Add transaction velocity feature engineering [2026-03-23T10:21:54]
 
 # Implement ensemble of XGBoost and RandomForest [2026-04-03T10:07:09]
+
+# Implement real-time inference with Redis cache [2026-04-07T15:41:03]
