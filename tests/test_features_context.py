@@ -55,3 +55,28 @@ def test_time_buckets_and_flags(context_frame):
     assert is_night(hours).tolist() == [1, 0, 0]
     with pytest.raises(ValueError):
         time_of_day_bucket(np.array([24]))
+
+
+def test_day_of_week_and_weekend(context_frame):
+    days = day_of_week(context_frame["timestamp"])
+    assert days.tolist() == [5, 5, 0]
+    assert is_weekend_down(days).tolist() == [1, 1, 0]
+
+
+def test_risk_tables_and_overrides():
+    defaults = default_category_risk()
+    assert defaults["crypto"] > defaults["groceries"]
+    overridden = category_risk_table({"crypto": 0.1})
+    assert overridden["crypto"] == 0.1
+    scores = country_risk_scores(pd.Series(["PK", "RU", "ZZ"]))
+    assert scores[1] > scores[0]
+    assert scores[2] == 0.5
+
+
+def test_first_seen_flags_are_causal(context_frame):
+    flags = first_seen_flags(context_frame, "merchant_id")
+    assert flags.tolist() == [1, 0, 1]
+    countries = first_seen_flags(context_frame, "country")
+    assert countries.tolist() == [1, 0, 1]
+    with pytest.raises(ValueError):
+        first_seen_flags(context_frame, "missing")

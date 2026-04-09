@@ -38,3 +38,21 @@ def cyclic_encoding(values: np.ndarray, period: int) -> tuple[np.ndarray, np.nda
         raise ValueError("period must be > 1")
     angle = 2.0 * np.pi * np.asarray(values, dtype=np.float64) / period
     return np.sin(angle), np.cos(angle)
+
+
+def hour_of_day(timestamps: pd.Series) -> np.ndarray:
+    """Integer hour in ``[0, 23]`` for each timestamp."""
+    return pd.to_datetime(timestamps).dt.hour.to_numpy(dtype=np.int64)
+
+
+def day_of_week(timestamps: pd.Series) -> np.ndarray:
+    """Integer day of week, Monday = 0."""
+    return pd.to_datetime(timestamps).dt.day_of_week.to_numpy(dtype=np.int64)
+
+
+def time_of_day_bucket(hours: np.ndarray) -> np.ndarray:
+    """Bucket an hour into night / morning / afternoon / evening."""
+    hours = np.asarray(hours, dtype=np.int64)
+    if np.any((hours < 0) | (hours > 23)):
+        raise ValueError("hours must be in [0, 23]")
+    return np.where(hours < 6, 0, np.where(hours < 12, 1, np.where(hours < 18, 2, 3)))
