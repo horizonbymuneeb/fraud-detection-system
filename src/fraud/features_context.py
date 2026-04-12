@@ -56,3 +56,13 @@ def time_of_day_bucket(hours: np.ndarray) -> np.ndarray:
     if np.any((hours < 0) | (hours > 23)):
         raise ValueError("hours must be in [0, 23]")
     return np.where(hours < 6, 0, np.where(hours < 12, 1, np.where(hours < 18, 2, 3)))
+
+
+def is_night(hours: np.ndarray) -> np.ndarray:
+    """1 for the 00:00-05:59 window."""
+    return np.isin(np.asarray(hours), NIGHT_HOURS).astype(np.int8)
+
+
+def is_weekend_down(days: np.ndarray) -> np.ndarray:
+    """1 for Saturday and Sunday."""
+    return np.isin(np.asarray(days), WEEKEND_DAYS).astype(np.int8)

@@ -80,3 +80,27 @@ def test_first_seen_flags_are_causal(context_frame):
     assert countries.tolist() == [1, 0, 1]
     with pytest.raises(ValueError):
         first_seen_flags(context_frame, "missing")
+
+
+def test_category_frequency_fit_and_apply():
+    freq = fit_category_frequency(pd.DataFrame({"merchant_category": ["a", "a", "b"]}))
+    assert freq["a"] == pytest.approx(2 / 3)
+    applied = apply_category_frequency(pd.Series(["a", "b", "unseen"]), freq)
+    assert applied[0] == pytest.approx(2 / 3)
+    assert applied[2] == pytest.approx(freq.min())
+    with pytest.raises(ValueError):
+        fit_category_frequency(pd.DataFrame({"merchant_category": []}))
+
+
+def test_context_features_shape_and_columns(context_frame):
+    features = context_features(context_frame)
+    assert list(features.columns) == context_columns()
+    assert len(features) == len(context_frame)
+    assert features["ctx_is_night"].tolist() == [1.0, 0.0, 0.0]
+    assert features["ctx_new_merchant"].tolist() == [1.0, 0.0, 1.0]
+    assert features["ctx_country_risk"].iloc[2] > features["ctx_country_risk"].iloc[0]
+
+
+def test_context_features_require_columns(context_frame):
+    with pytest.raises(ValueError, match="country"):
+        context_features(context_frame.drop(columns=["country"]))
