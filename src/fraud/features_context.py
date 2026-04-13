@@ -66,3 +66,17 @@ def is_night(hours: np.ndarray) -> np.ndarray:
 def is_weekend_down(days: np.ndarray) -> np.ndarray:
     """1 for Saturday and Sunday."""
     return np.isin(np.asarray(days), WEEKEND_DAYS).astype(np.int8)
+
+
+def risk_lookup(values: pd.Series | np.ndarray, table: dict[str, float], default: float) -> np.ndarray:
+    """Map categorical values to risks, defaulting for unseen categories."""
+    if not table:
+        raise ValueError("risk table must not be empty")
+    return np.array(
+        [float(table.get(str(value), default)) for value in np.asarray(values)], dtype=np.float64
+    )
+
+
+def category_risk_scores(categories: pd.Series, overrides: dict[str, float] | None = None) -> np.ndarray:
+    """Risk score per merchant category."""
+    return risk_lookup(categories, category_risk_table(overrides), default=0.35)
