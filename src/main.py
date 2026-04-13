@@ -356,3 +356,5 @@ if __name__ == '__main__':
 # Update feature store integration for batch [2026-04-02T10:01:58]
 
 # Implement cross-validation for time series [2026-04-03T09:35:35]
+
+# Add model explainability with SHAP values [2026-04-13T11:22:42]
