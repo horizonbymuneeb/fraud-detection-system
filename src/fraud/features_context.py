@@ -105,3 +105,60 @@ def apply_category_frequency(categories: pd.Series, frequency: pd.Series) -> np.
         [float(frequency.get(str(value), fallback)) for value in categories.to_numpy()],
         dtype=np.float64,
     )
+
+
+def first_seen_flags(frame: pd.DataFrame, column: str) -> np.ndarray:
+    """1 where ``column`` appears for the first time for that card.
+
+    Rows are evaluated in timestamp order, so the flag is causal: the first
+    sighting of a merchant or country is exactly what a scorer would see.
+    """
+    if column not in frame:
+        raise ValueError(f"frame is missing column: {column}")
+    working = frame.copy()
+    working["_pos"] = np.arange(len(working))
+    ordered = working.sort_values(["card_id", "timestamp"], kind="mergesort")
+    flags = np.zeros(len(frame), dtype=np.int8)
+    for _card, group in ordered.groupby("card_id", sort=False):
+        seen: set[str] = set()
+        for pos, value in zip(group["_pos"].to_numpy(), group[column].astype(str).to_numpy()):
+            if value not in seen:
+                seen.add(value)
+                flags[int(pos)] = 1
+    return flags
+
+
+def context_features(
+    frame: pd.DataFrame,
+    category_risk_overrides: dict[str, float] | None = None,
+    category_frequency: pd.Series | None = None,
+) -> pd.DataFrame:
+    """Return the calendar / merchant-risk / novelty feature block."""
+    required = {"card_id", "timestamp", "merchant_id", "merchant_category", "country"}
+    missing = required - set(frame.columns)
+    if missing:
+        raise ValueError(f"context features need columns: {sorted(missing)}")
+    hours = hour_of_day(frame["timestamp"])
+    days = day_of_week(frame["timestamp"])
+    hour_sin, hour_cos = cyclic_encoding(hours, 24)
+    day_sin, day_cos = cyclic_encoding(days, 7)
+    frequency = (
+        fit_category_frequency(frame) if category_frequency is None else category_frequency
+    )
+    block = {
+        "ctx_hour_sin": hour_sin,
+        "ctx_hour_cos": hour_cos,
+        "ctx_dow_sin": day_sin,
+        "ctx_dow_cos": day_cos,
+        "ctx_hour": hours.astype(np.float64),
+        "ctx_dow": days.astype(np.float64),
+        "ctx_time_of_day": time_of_day_bucket(hours).astype(np.float64),
+        "ctx_is_night": is_night(hours).astype(np.float64),
+        "ctx_is_weekend": is_weekend_down(days).astype(np.float64),
+        "ctx_category_risk": category_risk_scores(frame["merchant_category"], category_risk_overrides),
+        "ctx_country_risk": country_risk_scores(frame["country"]),
+        "ctx_category_share": apply_category_frequency(frame["merchant_category"], frequency),
+        "ctx_new_merchant": first_seen_flags(frame, "merchant_id").astype(np.float64),
+        "ctx_new_country": first_seen_flags(frame, "country").astype(np.float64),
+    }
+    return pd.DataFrame(block, index=frame.index).astype(np.float64)
