@@ -80,3 +80,28 @@ def risk_lookup(values: pd.Series | np.ndarray, table: dict[str, float], default
 def category_risk_scores(categories: pd.Series, overrides: dict[str, float] | None = None) -> np.ndarray:
     """Risk score per merchant category."""
     return risk_lookup(categories, category_risk_table(overrides), default=0.35)
+
+
+def country_risk_scores(countries: pd.Series) -> np.ndarray:
+    """Risk score per transaction country."""
+    return risk_lookup(countries, COUNTRY_RISK, default=0.5)
+
+
+def fit_category_frequency(train_frame: pd.DataFrame) -> pd.Series:
+    """Share of training transactions per merchant category."""
+    if train_frame.empty:
+        raise ValueError("cannot fit category frequency on an empty frame")
+    if "merchant_category" not in train_frame:
+        raise ValueError("frame needs a merchant_category column")
+    return train_frame["merchant_category"].value_counts(normalize=True).sort_index()
+
+
+def apply_category_frequency(categories: pd.Series, frequency: pd.Series) -> np.ndarray:
+    """Frequency lookups; unseen categories get the table's minimum share."""
+    if frequency.empty:
+        return np.full(len(categories), np.nan)
+    fallback = float(frequency.min())
+    return np.array(
+        [float(frequency.get(str(value), fallback)) for value in categories.to_numpy()],
+        dtype=np.float64,
+    )
