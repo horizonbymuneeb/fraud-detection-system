@@ -360,3 +360,5 @@ if __name__ == '__main__':
 # Add model explainability with SHAP values [2026-04-13T11:22:42]
 
 # Implement A/B testing framework for models [2026-04-14T15:28:27]
+
+# Add anomaly detection as backup classifier [2026-04-17T15:45:29]

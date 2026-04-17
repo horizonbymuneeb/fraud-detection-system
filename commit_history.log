@@ -356,3 +356,4 @@
 [2026-04-13T11:22:42] Add model explainability with SHAP values
 [2026-04-14T11:39:45] Implement ensemble of XGBoost and RandomForest
 [2026-04-14T15:28:27] Implement A/B testing framework for models
+[2026-04-17T15:45:29] Add anomaly detection as backup classifier
