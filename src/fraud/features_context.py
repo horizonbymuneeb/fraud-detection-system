@@ -162,3 +162,20 @@ def context_features(
         "ctx_new_country": first_seen_flags(frame, "country").astype(np.float64),
     }
     return pd.DataFrame(block, index=frame.index).astype(np.float64)
+
+
+def context_columns() -> list[str]:
+    """Names of the columns :func:`context_features` produces."""
+    return [
+        "ctx_hour_sin", "ctx_hour_cos", "ctx_dow_sin", "ctx_dow_cos",
+        "ctx_hour", "ctx_dow", "ctx_time_of_day", "ctx_is_night",
+        "ctx_is_weekend", "ctx_category_risk", "ctx_country_risk",
+        "ctx_category_share", "ctx_new_merchant", "ctx_new_country",
+    ]
+
+
+def context_features_for_config(
+    frame: pd.DataFrame, cfg: Config, category_frequency: pd.Series | None = None
+) -> pd.DataFrame:
+    """Context block using the category-risk overrides from ``config.yaml``."""
+    return context_features(frame, dict(cfg.features.category_risk), category_frequency)
