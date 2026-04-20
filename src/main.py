@@ -362,3 +362,5 @@ if __name__ == '__main__':
 # Implement A/B testing framework for models [2026-04-14T15:28:27]
 
 # Add anomaly detection as backup classifier [2026-04-17T15:45:29]
+
+# Implement XGBoost fraud detection classifier [2026-04-20T11:01:47]
