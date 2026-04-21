@@ -15,3 +15,5 @@ import pandas as pd
 from .config import Config
 
 NS_PER_HOUR = 3_600_000_000_000
+REQUIRED_COLUMNS = ("card_id", "timestamp", "amount", "merchant_id")
+DEFAULT_WINDOWS_HOURS: tuple[int, ...] = (1, 24, 168)

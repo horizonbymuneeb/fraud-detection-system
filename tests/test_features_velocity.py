@@ -72,3 +72,32 @@ def test_distinct_window_counts():
     )))
     codes = np.array([1, 1, 2, 1])
     assert distinct_window_counts(times, codes, window_to_ns(1)).tolist() == [0, 1, 1, 0]
+
+
+def test_hours_since_previous_and_burst_flag():
+    times = timestamps_to_ns(pd.Series(pd.to_datetime(
+        ["2024-01-01 00:00", "2024-01-01 00:30", "2024-01-01 01:00"]
+    )))
+    gaps = hours_since_previous(times)
+    assert gaps[0] == -1.0
+    assert np.allclose(gaps[1:], [0.5, 0.5])
+    assert burst_flag(np.array([3, 4, 5])).tolist() == [0, 1, 1]
+    with pytest.raises(ValueError):
+        burst_flag(np.array([1]), threshold=0)
+
+
+def test_sum_ratio_is_bounded_and_guards_zero():
+    ratio = sum_ratio(np.array([0.0, 5.0, 10.0]), np.array([0.0, 10.0, 10.0]))
+    assert ratio.tolist() == [0.0, 0.5, 1.0]
+
+
+def test_hand_computed_window_features(hand_frame):
+    features = compute_velocity_features(hand_frame, windows=(1, 24))
+    card1 = features.iloc[:4]
+    assert card1["vel_count_1h"].tolist() == [0.0, 1.0, 0.0, 1.0]
+    assert card1["vel_sum_1h"].tolist() == [0.0, 10.0, 0.0, 30.0]
+    assert card1["vel_count_24h"].tolist() == [0.0, 1.0, 2.0, 3.0]
+    assert card1["vel_sum_24h"].tolist() == [0.0, 10.0, 30.0, 60.0]
+    assert card1["vel_prior_count"].tolist() == [0.0, 1.0, 2.0, 3.0]
+    assert card1["vel_hours_since_prev"].tolist()[0] == -1.0
+    assert card1["vel_distinct_merchants_24h"].tolist() == [0.0, 1.0, 2.0, 3.0]
