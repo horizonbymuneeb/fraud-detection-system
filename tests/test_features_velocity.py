@@ -101,3 +101,24 @@ def test_hand_computed_window_features(hand_frame):
     assert card1["vel_prior_count"].tolist() == [0.0, 1.0, 2.0, 3.0]
     assert card1["vel_hours_since_prev"].tolist()[0] == -1.0
     assert card1["vel_distinct_merchants_24h"].tolist() == [0.0, 1.0, 2.0, 3.0]
+
+
+def test_new_card_flag_and_short_window_share(hand_frame):
+    features = compute_velocity_features(hand_frame, windows=(1, 24))
+    assert features["vel_is_new_card"].iloc[0] == 1
+    assert features["vel_is_new_card"].iloc[1] == 0
+    assert 0.0 <= features["vel_sum_share_short"].iloc[3] <= 1.0
+    assert np.isnan(features["vel_count_1h"]).sum() == 0
+
+
+def test_feature_alignment_uses_position_even_with_shuffled_index(hand_frame):
+    shuffled = hand_frame.sort_values("timestamp", ascending=False)
+    features = compute_velocity_features(shuffled, windows=(1,))
+    assert (features.index == shuffled.index).all()
+    first_row = features.loc[hand_frame.index[0]]
+    assert first_row["vel_prior_count"] == 0
+
+
+def test_missing_columns_raise(hand_frame):
+    with pytest.raises(ValueError, match="merchant_id"):
+        compute_velocity_features(hand_frame.drop(columns=["merchant_id"]))
