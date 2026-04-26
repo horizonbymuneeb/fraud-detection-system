@@ -109,3 +109,49 @@ def hours_since_previous(times_ns: np.ndarray) -> np.ndarray:
     if len(times_ns) > 1:
         gaps[1:] = np.diff(times_ns) / NS_PER_HOUR
     return gaps
+
+
+def burst_flag(count_1h: np.ndarray, threshold: int = 4) -> np.ndarray:
+    """1 when a card produced ``threshold`` or more transactions in one hour."""
+    if threshold < 1:
+        raise ValueError("threshold must be >= 1")
+    return (count_1h >= threshold).astype(np.int8)
+
+
+def sum_ratio(short_sum: np.ndarray, long_sum: np.ndarray) -> np.ndarray:
+    """Share of the long-window volume that landed inside the short window."""
+    ratio = np.zeros(len(short_sum), dtype=np.float64)
+    usable = long_sum > 0
+    ratio[usable] = short_sum[usable] / long_sum[usable]
+    return np.clip(ratio, 0.0, 1.0)
+
+
+def _card_velocity(
+    times_ns: np.ndarray,
+    amounts: np.ndarray,
+    merchant_codes: np.ndarray,
+    windows: Sequence[int],
+) -> dict[str, np.ndarray]:
+    """Compute every velocity column for a single card's ordered history."""
+    out: dict[str, np.ndarray] = {}
+    for hours in windows:
+        counts, sums = window_counts_sums(times_ns, amounts, window_to_ns(hours))
+        out[f"vel_count_{hours}h"] = counts
+        out[f"vel_sum_{hours}h"] = sums
+    out["vel_hours_since_prev"] = hours_since_previous(times_ns)
+    out["vel_prior_count"] = np.arange(len(times_ns), dtype=np.int64)
+    out["vel_distinct_merchants_24h"] = distinct_window_counts(
+        times_ns, merchant_codes, window_to_ns(MERCHANT_WINDOW_HOURS)
+    )
+    out["vel_is_new_card"] = (out["vel_prior_count"] == 0).astype(np.int8)
+    smallest = min(windows)
+    largest = max(windows)
+    if smallest != largest:
+        out["vel_sum_share_short"] = sum_ratio(
+            out[f"vel_sum_{smallest}h"], out[f"vel_sum_{largest}h"]
+        )
+        out["vel_count_share_short"] = sum_ratio(
+            out[f"vel_count_{smallest}h"], out[f"vel_count_{largest}h"]
+        )
+    out["vel_burst_1h"] = burst_flag(out[f"vel_count_{smallest}h"])
+    return out
