@@ -122,3 +122,16 @@ def test_feature_alignment_uses_position_even_with_shuffled_index(hand_frame):
 def test_missing_columns_raise(hand_frame):
     with pytest.raises(ValueError, match="merchant_id"):
         compute_velocity_features(hand_frame.drop(columns=["merchant_id"]))
+
+
+def test_card_groups_requires_unique_index(hand_frame):
+    duplicated = pd.concat([hand_frame, hand_frame])
+    with pytest.raises(ValueError, match="unique"):
+        card_groups(duplicated)
+
+
+def test_velocity_columns_and_summary(hand_frame):
+    features = compute_velocity_features(hand_frame, windows=(1, 24, 168))
+    assert velocity_columns((1, 24, 168)) == list(features.columns)
+    summary = velocity_summary(features)
+    assert set(summary) == set(features.columns)

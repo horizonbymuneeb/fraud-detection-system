@@ -71,3 +71,41 @@ def window_counts_sums(
     counts = positions - left
     sums = cumulative[positions] - cumulative[left]
     return counts.astype(np.int64), sums
+
+
+def distinct_window_counts(
+    times_ns: np.ndarray, codes: np.ndarray, window_ns: int
+) -> np.ndarray:
+    """Number of distinct codes in ``(t - window, t)`` using a two-pointer count.
+
+    ``codes`` must be small non-negative integers (pandas ``factorize`` output).
+    """
+    n = len(times_ns)
+    if n != len(codes):
+        raise ValueError("times and codes must have equal length")
+    out = np.zeros(n, dtype=np.int64)
+    counts: dict[int, int] = {}
+    left = 0
+    distinct = 0
+    for i in range(n):
+        limit = times_ns[i] - window_ns
+        while left < i and times_ns[left] <= limit:
+            code = int(codes[left])
+            counts[code] -= 1
+            if counts[code] == 0:
+                distinct -= 1
+            left += 1
+        out[i] = distinct
+        code = int(codes[i])
+        counts[code] = counts.get(code, 0) + 1
+        if counts[code] == 1:
+            distinct += 1
+    return out
+
+
+def hours_since_previous(times_ns: np.ndarray) -> np.ndarray:
+    """Hours since the card's previous transaction; -1 for the first one."""
+    gaps = np.full(len(times_ns), -1.0, dtype=np.float64)
+    if len(times_ns) > 1:
+        gaps[1:] = np.diff(times_ns) / NS_PER_HOUR
+    return gaps
