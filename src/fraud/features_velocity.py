@@ -155,3 +155,50 @@ def _card_velocity(
         )
     out["vel_burst_1h"] = burst_flag(out[f"vel_count_{smallest}h"])
     return out
+
+
+def compute_velocity_features(
+    frame: pd.DataFrame, windows: Iterable[int] = DEFAULT_WINDOWS_HOURS
+) -> pd.DataFrame:
+    """Return the velocity feature block aligned with ``frame``'s index."""
+    missing = set(REQUIRED_COLUMNS) - set(frame.columns)
+    if missing:
+        raise ValueError(f"velocity features need columns: {sorted(missing)}")
+    windows = tuple(sorted(set(int(w) for w in windows)))
+    if not windows or any(w <= 0 for w in windows):
+        raise ValueError("windows must be a non-empty list of positive integers")
+    times_ns = timestamps_to_ns(frame["timestamp"])
+    amounts = frame["amount"].to_numpy(dtype=np.float64)
+    merchant_codes, _ = pd.factorize(frame["merchant_id"])
+    groups = card_groups(frame)
+
+    columns: dict[str, np.ndarray] = {}
+    for card, positions in groups.items():
+        block = _card_velocity(
+            times_ns[positions], amounts[positions], merchant_codes[positions], windows
+        )
+        for name, values in block.items():
+            target = columns.get(name)
+            if target is None:
+                target = np.zeros(len(frame), dtype=np.float64)
+                columns[name] = target
+            target[positions] = values
+    return pd.DataFrame(columns, index=frame.index).astype(np.float64)
+
+
+def velocity_columns(windows: Iterable[int] = DEFAULT_WINDOWS_HOURS) -> list[str]:
+    """Names of the columns :func:`compute_velocity_features` produces."""
+    windows = tuple(sorted(set(int(w) for w in windows)))
+    names: list[str] = []
+    for hours in windows:
+        names.extend([f"vel_count_{hours}h", f"vel_sum_{hours}h"])
+    names.extend([
+        "vel_hours_since_prev",
+        "vel_prior_count",
+        "vel_distinct_merchants_24h",
+        "vel_is_new_card",
+    ])
+    if len(set(windows)) > 1:
+        names.extend(["vel_sum_share_short", "vel_count_share_short"])
+    names.append("vel_burst_1h")
+    return names
