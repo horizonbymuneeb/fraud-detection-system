@@ -372,3 +372,5 @@ if __name__ == '__main__':
 # Add anomaly detection as backup classifier [2026-04-26T13:49:06]
 
 # Add anomaly detection as backup classifier [2026-05-01T12:03:24]
+
+# WIP: tuning neural networks for fraud patterns [2026-05-02T13:02:38]
