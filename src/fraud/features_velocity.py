@@ -202,3 +202,15 @@ def velocity_columns(windows: Iterable[int] = DEFAULT_WINDOWS_HOURS) -> list[str
         names.extend(["vel_sum_share_short", "vel_count_share_short"])
     names.append("vel_burst_1h")
     return names
+
+
+def velocity_features_for_config(frame: pd.DataFrame, cfg: Config) -> pd.DataFrame:
+    """Compute velocity features using the windows from ``config.yaml``."""
+    return compute_velocity_features(frame, cfg.features.velocity_windows_hours)
+
+
+def velocity_summary(features: pd.DataFrame) -> dict[str, float]:
+    """Median of each velocity column, for logs and the README table."""
+    if features.empty:
+        return {}
+    return {str(col): float(features[col].median()) for col in features.columns}
