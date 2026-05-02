@@ -365,3 +365,4 @@
 [2026-04-26T13:49:06] Add anomaly detection as backup classifier
 [2026-05-01T12:03:24] Add anomaly detection as backup classifier
 [2026-05-02T13:02:38] WIP: tuning neural networks for fraud patterns
+[2026-05-02T15:33:02] Update feature pipeline for real-time scoring
