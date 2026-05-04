@@ -78,3 +78,24 @@ def test_validation_rejects_unsorted_and_negative(tmp_path):
     shuffled = frame.sort_values("timestamp", ascending=False).reset_index(drop=True)
     with pytest.raises(ValueError, match="sorted"):
         validate_transactions(shuffled)
+
+
+def test_csv_round_trip_preserves_rows(tmp_path):
+    cfg = load_config("config.yaml", {"data": {"n_cards": 30, "n_days": 6}})
+    frame = generate_transactions(cfg)
+    path = write_transactions(frame, tmp_path / "txns.csv")
+    restored = read_transactions(path)
+    assert len(restored) == len(frame)
+    assert restored["timestamp"].is_monotonic_increasing
+    assert np.allclose(restored["amount"], frame["amount"])
+
+
+def test_chronological_split_respects_gap(tiny_frame, tiny_config):
+    train, test = chronological_split(
+        tiny_frame, tiny_config.split.train_fraction, tiny_config.split.boundary_gap_hours
+    )
+    assert train["timestamp"].max() + __import__("pandas").Timedelta(
+        hours=tiny_config.split.boundary_gap_hours
+    ) <= test["timestamp"].min()
+    assert len(train) + len(test) < len(tiny_frame)
+    assert train["is_fraud"].sum() > 0 and test["is_fraud"].sum() > 0

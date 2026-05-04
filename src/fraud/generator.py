@@ -39,3 +39,9 @@ COUNTRY_RISK: dict[str, float] = {
     "RU": 0.90, "NG": 0.75, "CN": 0.45, "BR": 0.55, "TR": 0.50, "VN": 0.60,
 }
 CHANNELS: tuple[str, ...] = ("chip", "contactless", "online")
+NIGHT_HOURS: tuple[int, ...] = (1, 2, 3, 4, 5)
+RISK_TIERS: tuple[str, ...] = ("low", "medium", "high")
+TRANSACTION_COLUMNS: tuple[str, ...] = (
+    "txn_id", "card_id", "timestamp", "amount", "merchant_id",
+    "merchant_category", "country", "channel", "is_fraud", "fraud_type",
+)
