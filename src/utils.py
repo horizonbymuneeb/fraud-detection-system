@@ -221,3 +221,5 @@ def format_number(n: int) -> str:
 # Implement ensemble of XGBoost and RandomForest [2026-04-21T09:15:46]
 
 # Implement A/B testing framework for models [2026-04-26T16:13:42]
+
+# Add anomaly detection as backup classifier [2026-05-04T09:09:22]
