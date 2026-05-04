@@ -36,3 +36,21 @@ def test_fraud_rate_is_close_to_the_configured_base_rate(tiny_config, tiny_frame
     summary = summarise_transactions(tiny_frame)
     assert 0.03 < summary["fraud_rate"] < 0.07
     assert summary["transactions"] == len(tiny_frame)
+
+
+def test_every_injected_pattern_appears(tiny_frame):
+    fraud = tiny_frame[tiny_frame["is_fraud"] == 1]
+    assert set(fraud["fraud_type"].unique()) == {"velocity", "amount", "geo", "night"}
+    assert fraud["timestamp"].notna().all()
+
+
+def test_legitimate_rows_have_no_fraud_type(tiny_frame):
+    legit = tiny_frame[tiny_frame["is_fraud"] == 0]
+    assert legit["fraud_type"].isna().all()
+
+
+def test_fraud_budget_matches_requested_rate():
+    assert fraud_budget(1000, 0.005) == 5
+    assert fraud_budget(1000, 0.0) == 0
+    with pytest.raises(ValueError):
+        fraud_budget(10, 1.5)

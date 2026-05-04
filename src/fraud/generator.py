@@ -32,3 +32,5 @@ CATEGORY_PROFILES: dict[str, tuple[float, float, float, float]] = {
     "pharmacy": (25.0, 0.50, 0.05, 0.10),
     "streaming": (15.0, 0.25, 0.02, 1.00),
 }
+HOME_COUNTRIES: tuple[str, ...] = ("PK", "AE", "US", "GB")
+FOREIGN_COUNTRIES: tuple[str, ...] = ("RU", "NG", "CN", "BR", "TR", "VN")
