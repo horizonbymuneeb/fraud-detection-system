@@ -378,3 +378,5 @@ if __name__ == '__main__':
 # Update feature pipeline for real-time scoring [2026-05-02T15:33:02]
 
 # Implement XGBoost fraud detection classifier [2026-05-04T19:13:56]
+
+# Add logging for prediction audit trail [2026-05-04T15:45:05]
