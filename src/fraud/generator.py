@@ -34,3 +34,8 @@ CATEGORY_PROFILES: dict[str, tuple[float, float, float, float]] = {
 }
 HOME_COUNTRIES: tuple[str, ...] = ("PK", "AE", "US", "GB")
 FOREIGN_COUNTRIES: tuple[str, ...] = ("RU", "NG", "CN", "BR", "TR", "VN")
+COUNTRY_RISK: dict[str, float] = {
+    "PK": 0.05, "AE": 0.05, "US": 0.05, "GB": 0.05,
+    "RU": 0.90, "NG": 0.75, "CN": 0.45, "BR": 0.55, "TR": 0.50, "VN": 0.60,
+}
+CHANNELS: tuple[str, ...] = ("chip", "contactless", "online")

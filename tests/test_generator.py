@@ -54,3 +54,27 @@ def test_fraud_budget_matches_requested_rate():
     assert fraud_budget(1000, 0.0) == 0
     with pytest.raises(ValueError):
         fraud_budget(10, 1.5)
+
+
+def test_event_allocation_accounts_for_burst_rows():
+    events = allocate_fraud_events(110, {"velocity": 0.5, "amount": 0.5})
+    rows = expected_rows_per_event()
+    produced = events["velocity"] * rows["velocity"] + events["amount"] * rows["amount"]
+    assert abs(produced - 110) < 10
+    assert events["velocity"] < events["amount"]
+
+
+def test_allocate_counts_sums_to_budget():
+    counts = allocate_fraud_counts(10, {"velocity": 0.4, "amount": 0.3, "geo": 0.2, "night": 0.1})
+    assert sum(counts.values()) == 10
+
+
+def test_validation_rejects_unsorted_and_negative(tmp_path):
+    frame = generate_transactions(load_config("config.yaml", {"data": {"n_cards": 20, "n_days": 5}}))
+    bad = frame.copy()
+    bad.loc[bad.index[-1], "amount"] = -5
+    with pytest.raises(ValueError, match="positive"):
+        validate_transactions(bad)
+    shuffled = frame.sort_values("timestamp", ascending=False).reset_index(drop=True)
+    with pytest.raises(ValueError, match="sorted"):
+        validate_transactions(shuffled)
