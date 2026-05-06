@@ -45,3 +45,46 @@ TRANSACTION_COLUMNS: tuple[str, ...] = (
     "txn_id", "card_id", "timestamp", "amount", "merchant_id",
     "merchant_category", "country", "channel", "is_fraud", "fraud_type",
 )
+
+
+@dataclass(frozen=True)
+class CardProfile:
+    """Behavioural profile of one cardholder."""
+
+    card_id: str
+    home_country: str
+    preferred: tuple[str, ...]
+    spend_scale: float
+    credit_limit: float
+    activity: float
+    risk_tier: str
+
+
+def generate_card_population(n_cards: int, rng: np.random.Generator) -> list[CardProfile]:
+    """Build ``n_cards`` cards with drawn geography, habits and limits."""
+    if n_cards <= 0:
+        raise ValueError("n_cards must be positive")
+    categories = list(CATEGORY_PROFILES)
+    cards: list[CardProfile] = []
+    for i in range(n_cards):
+        n_pref = int(rng.integers(2, 5))
+        preferred = tuple(rng.choice(categories, size=n_pref, replace=False).tolist())
+        cards.append(
+            CardProfile(
+                card_id=f"C{i:05d}",
+                home_country=str(rng.choice(HOME_COUNTRIES, p=[0.55, 0.25, 0.12, 0.08])),
+                preferred=preferred,
+                spend_scale=float(np.clip(rng.lognormal(0.0, 0.35), 0.4, 3.5)),
+                credit_limit=float(rng.choice([500, 1000, 2500, 5000, 10000])),
+                activity=float(np.clip(rng.gamma(2.0, 0.45), 0.05, 3.0)),
+                risk_tier=str(rng.choice(RISK_TIERS, p=[0.7, 0.25, 0.05])),
+            )
+        )
+    return cards
+
+
+def draw_category(card: CardProfile, rng: np.random.Generator) -> str:
+    """Pick the merchant category for a legitimate purchase on ``card``."""
+    if rng.random() < 0.72:
+        return str(rng.choice(card.preferred))
+    return str(rng.choice(list(CATEGORY_PROFILES)))
