@@ -380,3 +380,5 @@ if __name__ == '__main__':
 # Implement XGBoost fraud detection classifier [2026-05-04T19:13:56]
 
 # Add logging for prediction audit trail [2026-05-04T15:45:05]
+
+# WIP: benchmarking latency on 100K TPS target [2026-05-06T19:33:49]
