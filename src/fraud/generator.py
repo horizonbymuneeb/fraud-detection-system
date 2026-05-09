@@ -88,3 +88,18 @@ def draw_category(card: CardProfile, rng: np.random.Generator) -> str:
     if rng.random() < 0.72:
         return str(rng.choice(card.preferred))
     return str(rng.choice(list(CATEGORY_PROFILES)))
+
+
+def draw_amount(category: str, scale: float, rng: np.random.Generator) -> float:
+    """Lognormal amount around the category median, rounded to cents."""
+    median, sigma, _risk, _online = CATEGORY_PROFILES[category]
+    return round(float(rng.lognormal(np.log(median * scale), sigma)), 2)
+
+
+def draw_country(card: CardProfile, category: str, rng: np.random.Generator) -> str:
+    """Most purchases happen at home; online travel is the usual exception."""
+    online_share = CATEGORY_PROFILES[category][3]
+    foreign_share = 0.02 + 0.06 * online_share
+    if rng.random() < foreign_share:
+        return str(rng.choice(FOREIGN_COUNTRIES))
+    return card.home_country
