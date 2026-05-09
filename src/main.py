@@ -382,3 +382,5 @@ if __name__ == '__main__':
 # Add logging for prediction audit trail [2026-05-04T15:45:05]
 
 # WIP: benchmarking latency on 100K TPS target [2026-05-06T19:33:49]
+
+# Update deployment scripts for Docker container [2026-05-09T11:38:01]
