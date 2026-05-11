@@ -103,3 +103,16 @@ def draw_country(card: CardProfile, category: str, rng: np.random.Generator) -> 
     if rng.random() < foreign_share:
         return str(rng.choice(FOREIGN_COUNTRIES))
     return card.home_country
+
+
+def draw_channel(category: str, rng: np.random.Generator) -> str:
+    """Channel mix: online categories are mostly card-not-present."""
+    online_share = CATEGORY_PROFILES[category][3]
+    if rng.random() < online_share:
+        return "online"
+    return str(rng.choice(["chip", "contactless"]))
+
+
+def draw_merchant(category: str, rng: np.random.Generator) -> str:
+    """Stable-looking merchant identifier scoped by category."""
+    return f"{category[:4].upper()}-{int(rng.integers(1, 400)):03d}"
