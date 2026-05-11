@@ -223,3 +223,5 @@ def format_number(n: int) -> str:
 # Implement A/B testing framework for models [2026-04-26T16:13:42]
 
 # Add anomaly detection as backup classifier [2026-05-04T09:09:22]
+
+# Update feature pipeline for real-time scoring [2026-05-11T13:46:53]
