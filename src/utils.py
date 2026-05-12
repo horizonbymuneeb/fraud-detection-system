@@ -225,3 +225,5 @@ def format_number(n: int) -> str:
 # Add anomaly detection as backup classifier [2026-05-04T09:09:22]
 
 # Update feature pipeline for real-time scoring [2026-05-11T13:46:53]
+
+# Implement real-time inference with Redis cache [2026-05-12T20:59:45]
