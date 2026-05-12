@@ -116,3 +116,36 @@ def draw_channel(category: str, rng: np.random.Generator) -> str:
 def draw_merchant(category: str, rng: np.random.Generator) -> str:
     """Stable-looking merchant identifier scoped by category."""
     return f"{category[:4].upper()}-{int(rng.integers(1, 400)):03d}"
+
+
+def draw_timestamps(day: pd.Timestamp, activity: float, rng: np.random.Generator) -> list[pd.Timestamp]:
+    """Poisson transaction count for a card-day, with a human hour-of-day mix."""
+    count = int(rng.poisson(activity))
+    stamps: list[pd.Timestamp] = []
+    for _ in range(count):
+        if rng.random() < 0.78:
+            hour = int(rng.integers(8, 23))
+        else:
+            hour = int(rng.integers(0, 24))
+        minute = int(rng.integers(0, 60))
+        second = int(rng.integers(0, 60))
+        stamps.append(day + pd.Timedelta(hours=hour, minutes=minute, seconds=second))
+    return stamps
+
+
+def make_legit_transaction(
+    card: CardProfile, timestamp: pd.Timestamp, rng: np.random.Generator
+) -> dict[str, object]:
+    """Assemble one legitimate transaction row."""
+    category = draw_category(card, rng)
+    return {
+        "card_id": card.card_id,
+        "timestamp": timestamp,
+        "amount": draw_amount(category, card.spend_scale, rng),
+        "merchant_id": draw_merchant(category, rng),
+        "merchant_category": category,
+        "country": draw_country(card, category, rng),
+        "channel": draw_channel(category, rng),
+        "is_fraud": 0,
+        "fraud_type": None,
+    }
