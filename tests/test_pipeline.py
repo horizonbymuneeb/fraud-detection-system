@@ -46,3 +46,34 @@ def test_split_masks_are_disjoint_and_respect_gap(tiny_frame, tiny_config):
     train_end = tiny_frame.loc[train_mask, "timestamp"].max()
     test_start = tiny_frame.loc[test_mask, "timestamp"].min()
     assert test_start >= train_end + pd.Timedelta(hours=tiny_config.split.boundary_gap_hours)
+
+
+def test_imputer_fills_nan_with_train_medians():
+    X = pd.DataFrame({"a": [1.0, np.nan, 3.0], "b": [np.nan, np.nan, np.nan]})
+    medians = fit_imputer(X)
+    assert medians["a"] == pytest.approx(2.0)
+    assert medians["b"] == 0.0
+    filled = apply_imputer(X, medians)
+    assert filled.isna().sum().sum() == 0
+    assert filled["a"].tolist() == [1.0, 2.0, 3.0]
+
+
+def test_clipper_caps_values_at_fitted_quantile():
+    X = pd.DataFrame({"a": [1.0, 2.0, 3.0, 1000.0]})
+    bounds = fit_clipper(X, 0.75)
+    clipped = apply_clipper(X, bounds)
+    assert clipped["a"].max() == bounds["a"] < 1000.0
+    with pytest.raises(ValueError):
+        fit_clipper(X, 0.2)
+
+
+def test_make_xy_aligns_labels_and_validates_mask():
+    frame = pd.DataFrame({"is_fraud": [0, 1, 0]})
+    features = pd.DataFrame({"f": [0.1, 0.2, 0.3]})
+    mask = np.array([True, True, False])
+    X, y = make_xy(features, frame, mask)
+    assert len(X) == 2 and y.tolist() == [0, 1]
+    with pytest.raises(ValueError):
+        make_xy(features, frame, np.array([False, False, False]))
+    with pytest.raises(ValueError):
+        make_xy(features, frame, np.array([1, 0, 0]))

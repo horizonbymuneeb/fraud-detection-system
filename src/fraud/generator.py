@@ -149,3 +149,51 @@ def make_legit_transaction(
         "is_fraud": 0,
         "fraud_type": None,
     }
+
+
+def generate_legit_transactions(
+    cards: Sequence[CardProfile], n_days: int, start_date: str, rng: np.random.Generator
+) -> list[dict[str, object]]:
+    """Walk every card over every day and collect legitimate transactions."""
+    rows: list[dict[str, object]] = []
+    start = pd.Timestamp(start_date).normalize()
+    # Weekend shopping bump keeps the day-of-week feature informative.
+    for offset in range(n_days):
+        day = start + pd.Timedelta(days=offset)
+        day_factor = 1.18 if day.day_of_week >= 5 else 1.0
+        for card in cards:
+            for ts in draw_timestamps(day, card.activity * day_factor, rng):
+                rows.append(make_legit_transaction(card, ts, rng))
+    return rows
+
+
+def make_amount_fraud(card: CardProfile, ts: pd.Timestamp, rng: np.random.Generator) -> list[dict[str, object]]:
+    """Suspiciously large purchase, typically electronics or gift cards."""
+    category = str(rng.choice(["electronics", "gift_cards", "jewellery", "crypto"]))
+    amount = round(float(card.credit_limit * rng.uniform(0.55, 0.98)), 2)
+    return [{
+        "card_id": card.card_id, "timestamp": ts, "amount": amount,
+        "merchant_id": draw_merchant(category, rng), "merchant_category": category,
+        "country": card.home_country, "channel": "online", "is_fraud": 1,
+        "fraud_type": "amount",
+    }]
+
+
+def make_velocity_fraud(card: CardProfile, ts: pd.Timestamp, rng: np.random.Generator) -> list[dict[str, object]]:
+    """Burst of 5-8 card-present attempts within about an hour."""
+    n = int(rng.integers(5, 9))
+    rows: list[dict[str, object]] = []
+    for k in range(n):
+        category = str(rng.choice(["fuel", "groceries", "gift_cards", "pharmacy"]))
+        rows.append({
+            "card_id": card.card_id,
+            "timestamp": ts + pd.Timedelta(minutes=int(k * rng.integers(3, 9))),
+            "amount": round(float(rng.uniform(15.0, 120.0) * card.spend_scale), 2),
+            "merchant_id": draw_merchant(category, rng),
+            "merchant_category": category,
+            "country": card.home_country,
+            "channel": "chip",
+            "is_fraud": 1,
+            "fraud_type": "velocity",
+        })
+    return rows
