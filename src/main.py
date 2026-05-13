@@ -384,3 +384,5 @@ if __name__ == '__main__':
 # WIP: benchmarking latency on 100K TPS target [2026-05-06T19:33:49]
 
 # Update deployment scripts for Docker container [2026-05-09T11:38:01]
+
+# Update feature pipeline for real-time scoring [2026-05-13T11:46:41]
