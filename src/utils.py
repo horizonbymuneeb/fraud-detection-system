@@ -227,3 +227,5 @@ def format_number(n: int) -> str:
 # Update feature pipeline for real-time scoring [2026-05-11T13:46:53]
 
 # Implement real-time inference with Redis cache [2026-05-12T20:59:45]
+
+# Implement cross-validation for time series [2026-05-15T15:11:25]
