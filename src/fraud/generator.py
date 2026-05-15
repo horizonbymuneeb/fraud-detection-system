@@ -197,3 +197,36 @@ def make_velocity_fraud(card: CardProfile, ts: pd.Timestamp, rng: np.random.Gene
             "fraud_type": "velocity",
         })
     return rows
+
+
+def make_geo_fraud(card: CardProfile, ts: pd.Timestamp, rng: np.random.Generator) -> list[dict[str, object]]:
+    """Card suddenly used abroad, in a country it has never appeared in."""
+    category = str(rng.choice(["electronics", "travel", "crypto"]))
+    country = str(rng.choice(FOREIGN_COUNTRIES))
+    return [{
+        "card_id": card.card_id, "timestamp": ts,
+        "amount": round(float(rng.uniform(200.0, 1800.0) * card.spend_scale), 2),
+        "merchant_id": draw_merchant(category, rng), "merchant_category": category,
+        "country": country, "channel": "online", "is_fraud": 1, "fraud_type": "geo",
+    }]
+
+
+def make_night_fraud(card: CardProfile, ts: pd.Timestamp, rng: np.random.Generator) -> list[dict[str, object]]:
+    """Late-night purchase forced into the 01:00-05:00 window."""
+    category = str(rng.choice(["gift_cards", "electronics", "streaming"]))
+    night_ts = ts.normalize() + pd.Timedelta(hours=int(rng.choice(NIGHT_HOURS)), minutes=int(rng.integers(0, 60)))
+    return [{
+        "card_id": card.card_id, "timestamp": night_ts,
+        "amount": round(float(rng.uniform(80.0, 900.0) * card.spend_scale), 2),
+        "merchant_id": draw_merchant(category, rng), "merchant_category": category,
+        "country": card.home_country, "channel": "online", "is_fraud": 1,
+        "fraud_type": "night",
+    }]
+
+
+FRAUD_BUILDERS = {
+    "velocity": make_velocity_fraud,
+    "amount": make_amount_fraud,
+    "geo": make_geo_fraud,
+    "night": make_night_fraud,
+}
