@@ -386,3 +386,5 @@ if __name__ == '__main__':
 # Update deployment scripts for Docker container [2026-05-09T11:38:01]
 
 # Update feature pipeline for real-time scoring [2026-05-13T11:46:41]
+
+# Implement Kafka streaming consumer for events [2026-05-18T11:10:30]
