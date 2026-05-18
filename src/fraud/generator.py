@@ -254,3 +254,35 @@ def fraud_budget(n_legit: int, base_fraud_rate: float) -> int:
     if base_fraud_rate == 0.0:
         return 0
     return max(1, int(round(n_legit * base_fraud_rate / (1.0 - base_fraud_rate))))
+
+
+def expected_rows_per_event() -> dict[str, float]:
+    """Average rows one injected event produces per pattern.
+
+    A velocity ring is a burst, so one event is several rows; the other three
+    patterns are single rows. The event budget is divided by these weights so
+    the stream lands on the configured row-level fraud rate.
+    """
+    return {"velocity": 6.5, "amount": 1.0, "geo": 1.0, "night": 1.0}
+
+
+def allocate_fraud_events(
+    n_fraud_rows: int, mix: dict[str, float], rows_per_event: dict[str, float] | None = None
+) -> dict[str, int]:
+    """Split a row-level fraud budget into event counts per pattern."""
+    if n_fraud_rows <= 0:
+        return {fraud_type: 0 for fraud_type in FRAUD_TYPES}
+    weights = expected_rows_per_event() if rows_per_event is None else rows_per_event
+    shares = {k: max(0.0, float(mix.get(k, 0.0))) for k in FRAUD_TYPES}
+    total = sum(shares.values())
+    if total <= 0:
+        raise ValueError("fraud_mix must contain at least one positive share")
+    row_budget = {k: n_fraud_rows * shares[k] / total for k in FRAUD_TYPES}
+    events = {
+        k: int(round(row_budget[k] / max(weights.get(k, 1.0), 1e-9)))
+        for k in FRAUD_TYPES
+    }
+    for k in FRAUD_TYPES:
+        if shares[k] > 0 and events[k] == 0:
+            events[k] = 1
+    return events
