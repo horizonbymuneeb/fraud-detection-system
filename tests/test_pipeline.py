@@ -77,3 +77,24 @@ def test_make_xy_aligns_labels_and_validates_mask():
         make_xy(features, frame, np.array([False, False, False]))
     with pytest.raises(ValueError):
         make_xy(features, frame, np.array([1, 0, 0]))
+
+
+def test_prepare_datasets_shapes_and_amounts(tiny_datasets, tiny_config):
+    n_features = len(feature_columns(tiny_config))
+    assert tiny_datasets["X_train"].shape[1] == n_features
+    assert tiny_datasets["X_test"].shape[1] == n_features
+    assert len(tiny_datasets["amount_train"]) == len(tiny_datasets["y_train"])
+    assert tiny_datasets["X_train"].isna().sum().sum() == 0
+    assert set(np.unique(tiny_datasets["y_train"])) == {0, 1}
+
+
+def test_feature_groups_and_manifest(tmp_path, tiny_config):
+    assert feature_group("vel_count_1h") == "velocity"
+    assert feature_group("dev_zscore") == "behaviour"
+    assert feature_group("ctx_hour_sin") == "context"
+    with pytest.raises(ValueError):
+        feature_group("unknown_feature")
+    path = save_manifest(tmp_path / "manifest.json", tiny_config)
+    payload = load_manifest(path)
+    assert payload["n_features"] == len(feature_columns(tiny_config))
+    assert len(payload["features"]) == payload["n_features"]

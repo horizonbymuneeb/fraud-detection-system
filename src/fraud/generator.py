@@ -230,3 +230,27 @@ FRAUD_BUILDERS = {
     "geo": make_geo_fraud,
     "night": make_night_fraud,
 }
+
+
+def allocate_fraud_counts(n_fraud: int, mix: dict[str, float]) -> dict[str, int]:
+    """Split a fraud budget across patterns, giving leftovers to the largest share."""
+    known = {k: max(0.0, float(mix.get(k, 0.0))) for k in FRAUD_TYPES}
+    total = sum(known.values())
+    if total <= 0:
+        raise ValueError("fraud_mix must contain at least one positive share")
+    shares = {k: v / total for k, v in known.items()}
+    counts = {k: int(np.floor(n_fraud * s)) for k, s in shares.items()}
+    remainder = n_fraud - sum(counts.values())
+    winners = sorted(shares, key=lambda k: (-shares[k], k))
+    for i in range(remainder):
+        counts[winners[i % len(winners)]] += 1
+    return counts
+
+
+def fraud_budget(n_legit: int, base_fraud_rate: float) -> int:
+    """Number of fraud *rows* that yields ``base_fraud_rate`` over the stream."""
+    if not 0.0 <= base_fraud_rate < 1.0:
+        raise ValueError("base_fraud_rate must be in [0, 1)")
+    if base_fraud_rate == 0.0:
+        return 0
+    return max(1, int(round(n_legit * base_fraud_rate / (1.0 - base_fraud_rate))))
