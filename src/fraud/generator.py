@@ -286,3 +286,44 @@ def allocate_fraud_events(
         if shares[k] > 0 and events[k] == 0:
             events[k] = 1
     return events
+
+
+def inject_fraud(
+    legit_rows: Sequence[dict[str, object]],
+    cards: Sequence[CardProfile],
+    mix: dict[str, float],
+    base_fraud_rate: float,
+    rng: np.random.Generator,
+) -> list[dict[str, object]]:
+    """Draw fraud events over the same cards and time span as the legit stream."""
+    if not legit_rows:
+        return []
+    n_fraud_rows = fraud_budget(len(legit_rows), base_fraud_rate)
+    events = allocate_fraud_events(n_fraud_rows, mix)
+    start = min(r["timestamp"] for r in legit_rows)  # type: ignore[type-var]
+    end = max(r["timestamp"] for r in legit_rows)  # type: ignore[type-var]
+    span_seconds = max(1, int((end - start).total_seconds()))
+    injected: list[dict[str, object]] = []
+    for fraud_type in FRAUD_TYPES:
+        builder = FRAUD_BUILDERS[fraud_type]
+        for _ in range(events[fraud_type]):
+            card = cards[int(rng.integers(0, len(cards)))]
+            ts = start + pd.Timedelta(seconds=int(rng.integers(0, span_seconds)))
+            injected.extend(builder(card, ts, rng))
+    return injected
+
+
+def generate_transactions(cfg: Config) -> pd.DataFrame:
+    """Generate the full labelled stream and return it sorted by time."""
+    rng = np.random.default_rng(cfg.seed)
+    cards = generate_card_population(cfg.data.n_cards, rng)
+    legit = generate_legit_transactions(
+        cards, cfg.data.n_days, cfg.data.start_date, rng
+    )
+    fraud = inject_fraud(
+        legit, cards, dict(cfg.data.fraud_mix), cfg.data.base_fraud_rate, rng
+    )
+    frame = pd.DataFrame(legit + fraud, columns=list(TRANSACTION_COLUMNS))
+    frame = frame.sort_values(["timestamp", "card_id"], kind="mergesort").reset_index(drop=True)
+    frame["txn_id"] = [f"T{i:07d}" for i in range(len(frame))]
+    return frame
