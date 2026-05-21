@@ -327,3 +327,56 @@ def generate_transactions(cfg: Config) -> pd.DataFrame:
     frame = frame.sort_values(["timestamp", "card_id"], kind="mergesort").reset_index(drop=True)
     frame["txn_id"] = [f"T{i:07d}" for i in range(len(frame))]
     return frame
+
+
+def validate_transactions(frame: pd.DataFrame) -> dict[str, object]:
+    """Cheap integrity checks on a transaction frame; returns a summary dict."""
+    missing = set(TRANSACTION_COLUMNS) - set(frame.columns)
+    if missing:
+        raise ValueError(f"transaction frame is missing columns: {sorted(missing)}")
+    if frame.empty:
+        raise ValueError("transaction frame is empty")
+    if (frame["amount"] <= 0).any():
+        raise ValueError("transaction amounts must be positive")
+    if not frame["timestamp"].is_monotonic_increasing:
+        raise ValueError("transactions must be sorted by timestamp")
+    unknown = set(frame["fraud_type"].dropna().unique()) - set(FRAUD_TYPES)
+    if unknown:
+        raise ValueError(f"unknown fraud_type values: {sorted(unknown)}")
+    if (frame.loc[frame["is_fraud"] == 0, "fraud_type"].notna()).any():
+        raise ValueError("legitimate transactions must not carry a fraud_type")
+    return summarise_transactions(frame)
+
+
+def summarise_transactions(frame: pd.DataFrame) -> dict[str, object]:
+    """Counts used by the CLI and the README's data section."""
+    n = int(len(frame))
+    fraud = frame["is_fraud"].astype(int)
+    by_type = frame.loc[frame["is_fraud"] == 1, "fraud_type"].value_counts().to_dict()
+    return {
+        "transactions": n,
+        "cards": int(frame["card_id"].nunique()),
+        "fraud": int(fraud.sum()),
+        "fraud_rate": float(fraud.mean()) if n else 0.0,
+        "fraud_by_type": {str(k): int(v) for k, v in by_type.items()},
+        "start": str(frame["timestamp"].min()),
+        "end": str(frame["timestamp"].max()),
+        "mean_amount": float(frame["amount"].mean()),
+    }
+
+
+def chronological_split(
+    frame: pd.DataFrame, train_fraction: float, gap_hours: int
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Split by time, dropping a gap so test rows have full velocity history."""
+    if not 0.0 < train_fraction < 1.0:
+        raise ValueError("train_fraction must be in (0, 1)")
+    if gap_hours < 0:
+        raise ValueError("gap_hours must be non-negative")
+    ordered = frame.sort_values("timestamp", kind="mergesort").reset_index(drop=True)
+    boundary = int(len(ordered) * train_fraction)
+    boundary_ts = ordered.loc[boundary, "timestamp"]
+    train = ordered.iloc[:boundary].copy()
+    test_start = boundary_ts + pd.Timedelta(hours=gap_hours)
+    test = ordered.loc[ordered["timestamp"] >= test_start].copy()
+    return train.reset_index(drop=True), test.reset_index(drop=True)
