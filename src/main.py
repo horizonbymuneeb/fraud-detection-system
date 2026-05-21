@@ -390,3 +390,5 @@ if __name__ == '__main__':
 # Implement Kafka streaming consumer for events [2026-05-18T11:10:30]
 
 # Add model monitoring dashboard for drift [2026-05-19T19:50:12]
+
+# Add model explainability with SHAP values [2026-05-21T16:02:37]
