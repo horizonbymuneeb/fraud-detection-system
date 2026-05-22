@@ -394,3 +394,5 @@ if __name__ == '__main__':
 # Add model explainability with SHAP values [2026-05-21T16:02:37]
 
 # Implement real-time inference with Redis cache [2026-05-22T11:54:33]
+
+# WIP: debugging SMOTE class imbalance handling [2026-05-22T12:10:53]
