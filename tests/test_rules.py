@@ -48,3 +48,26 @@ def test_rule_score_is_weighted_sum(feature_rows):
     assert rule_predict(scores).tolist() == [False, True, True]
     with pytest.raises(ValueError):
         rule_predict(scores, threshold=0)
+
+
+def test_triggered_rules_lists_names(feature_rows):
+    assert triggered_rules(feature_rows, 0) == []
+    names = triggered_rules(feature_rows, 1)
+    assert "burst_1h" in names and "foreign_first" in names
+
+
+def test_flags_require_features():
+    with pytest.raises(ValueError, match="features"):
+        rule_flags(pd.DataFrame({"vel_count_1h": [1.0]}))
+
+
+def test_tune_and_evaluate_rules():
+    labels = np.array([1, 0, 0, 1])
+    scores = np.array([2.0, 0.0, 0.0, 1.5])
+    threshold = tune_rule_threshold(labels, scores)
+    report = evaluate_rules(labels, scores, threshold)
+    assert report["tp"] >= 1
+    assert 0.0 <= report["precision"] <= 1.0
+    assert 0.0 <= report["recall"] <= 1.0
+    with pytest.raises(ValueError):
+        tune_rule_threshold(np.zeros(4, dtype=int), scores)

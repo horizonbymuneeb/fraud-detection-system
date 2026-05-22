@@ -416,3 +416,11 @@ def read_transactions(path: str | Path) -> pd.DataFrame:
     frame["timestamp"] = pd.to_datetime(frame["timestamp"], utc=False)
     frame = frame.sort_values(["timestamp", "card_id"], kind="mergesort").reset_index(drop=True)
     return frame
+
+
+def generate_and_save(cfg: Config) -> tuple[pd.DataFrame, Path]:
+    """Generate, validate, write to ``cfg.data.output_dir`` and return both."""
+    frame = generate_transactions(cfg)
+    validate_transactions(frame)
+    path = write_transactions(frame, Path(cfg.data.output_dir) / "transactions.csv")
+    return frame, path
