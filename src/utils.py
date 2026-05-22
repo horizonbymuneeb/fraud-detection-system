@@ -231,3 +231,5 @@ def format_number(n: int) -> str:
 # Implement cross-validation for time series [2026-05-15T15:11:25]
 
 # Implement A/B testing framework for models [2026-05-18T16:47:00]
+
+# Add logging for prediction audit trail [2026-05-22T18:27:45]
