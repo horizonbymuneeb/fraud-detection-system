@@ -380,3 +380,39 @@ def chronological_split(
     test_start = boundary_ts + pd.Timedelta(hours=gap_hours)
     test = ordered.loc[ordered["timestamp"] >= test_start].copy()
     return train.reset_index(drop=True), test.reset_index(drop=True)
+
+
+def split_metadata(train: pd.DataFrame, test: pd.DataFrame) -> dict[str, object]:
+    """Describe a finished split, including any rows lost to the gap."""
+    return {
+        "train_rows": int(len(train)),
+        "test_rows": int(len(test)),
+        "train_fraud": int(train["is_fraud"].sum()),
+        "test_fraud": int(test["is_fraud"].sum()),
+        "train_end": str(train["timestamp"].max()),
+        "test_start": str(test["timestamp"].min()),
+        "boundary_hours": float(
+            (test["timestamp"].min() - train["timestamp"].max()).total_seconds() / 3600.0
+        ),
+    }
+
+
+def write_transactions(frame: pd.DataFrame, path: str | Path) -> Path:
+    """Persist a transaction frame as CSV with ISO timestamps."""
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    out = frame.copy()
+    out["timestamp"] = out["timestamp"].dt.strftime("%Y-%m-%dT%H:%M:%S")
+    out.to_csv(path, index=False)
+    return path
+
+
+def read_transactions(path: str | Path) -> pd.DataFrame:
+    """Read a CSV written by :func:`write_transactions`."""
+    path = Path(path)
+    if not path.exists():
+        raise FileNotFoundError(f"transaction file not found: {path}")
+    frame = pd.read_csv(path)
+    frame["timestamp"] = pd.to_datetime(frame["timestamp"], utc=False)
+    frame = frame.sort_values(["timestamp", "card_id"], kind="mergesort").reset_index(drop=True)
+    return frame
