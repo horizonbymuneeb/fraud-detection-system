@@ -18,3 +18,25 @@ RULE_WEIGHTS: dict[str, float] = {
     "night_large": 1.0,
     "new_merchant_spike": 1.0,
 }
+RULE_THRESHOLD = 2.0
+
+
+def rule_flags(features: pd.DataFrame) -> pd.DataFrame:
+    """Boolean trigger columns; every rule is a single, explainable condition."""
+    required = {"vel_count_1h", "dev_zscore", "dev_median_ratio", "ctx_country_risk", "ctx_new_country"}
+    missing = required - set(features.columns)
+    if missing:
+        raise ValueError(f"rule baseline needs features: {sorted(missing)}")
+    night = features.get("ctx_is_night", pd.Series(0, index=features.index))
+    new_merchant = features.get("ctx_new_merchant", pd.Series(0, index=features.index))
+    return pd.DataFrame(
+        {
+            "burst_1h": features["vel_count_1h"] >= 5,
+            "extreme_amount": features["dev_zscore"] >= 6.0,
+            "amount_ratio": features["dev_median_ratio"] >= 8.0,
+            "foreign_first": (features["ctx_country_risk"] >= 0.6) & (features["ctx_new_country"] > 0),
+            "night_large": (night > 0) & (features["dev_median_ratio"] >= 4.0),
+            "new_merchant_spike": (new_merchant > 0) & (features["dev_zscore"] >= 3.0),
+        },
+        index=features.index,
+    )
