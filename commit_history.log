@@ -383,3 +383,4 @@
 [2026-05-22T12:10:53] WIP: debugging SMOTE class imbalance handling
 [2026-05-22T18:27:45] Add logging for prediction audit trail
 [2026-05-24T09:11:35] Fix timestamp feature extraction timezone bug
+[2026-05-26T13:10:49] Add model monitoring dashboard for drift

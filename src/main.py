@@ -396,3 +396,5 @@ if __name__ == '__main__':
 # Implement real-time inference with Redis cache [2026-05-22T11:54:33]
 
 # WIP: debugging SMOTE class imbalance handling [2026-05-22T12:10:53]
+
+# Add model monitoring dashboard for drift [2026-05-26T13:10:49]
