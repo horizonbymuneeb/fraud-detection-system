@@ -235,3 +235,5 @@ def format_number(n: int) -> str:
 # Add logging for prediction audit trail [2026-05-22T18:27:45]
 
 # Fix timestamp feature extraction timezone bug [2026-05-24T09:11:35]
+
+# Fix memory issue in batch inference worker [2026-05-28T15:23:46]
