@@ -40,3 +40,23 @@ def rule_flags(features: pd.DataFrame) -> pd.DataFrame:
         },
         index=features.index,
     )
+
+
+def rule_score(features: pd.DataFrame) -> np.ndarray:
+    """Weighted sum of triggered rules (0 = nothing fired)."""
+    flags = rule_flags(features)
+    weights = np.array([RULE_WEIGHTS[column] for column in flags.columns], dtype=np.float64)
+    return flags.to_numpy(dtype=np.float64) @ weights
+
+
+def rule_predict(scores: np.ndarray, threshold: float = RULE_THRESHOLD) -> np.ndarray:
+    """Flag a transaction when the weighted rule score reaches ``threshold``."""
+    if threshold <= 0:
+        raise ValueError("threshold must be positive")
+    return np.asarray(scores, dtype=np.float64) >= threshold
+
+
+def triggered_rules(features: pd.DataFrame, position: int) -> list[str]:
+    """Names of the rules that fired for one positional row."""
+    flags = rule_flags(features.iloc[[position]])
+    return [column for column in flags.columns if bool(flags.iloc[0][column])]
