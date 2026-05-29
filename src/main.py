@@ -398,3 +398,5 @@ if __name__ == '__main__':
 # WIP: debugging SMOTE class imbalance handling [2026-05-22T12:10:53]
 
 # Add model monitoring dashboard for drift [2026-05-26T13:10:49]
+
+# Implement cross-validation for time series [2026-05-29T09:08:07]
