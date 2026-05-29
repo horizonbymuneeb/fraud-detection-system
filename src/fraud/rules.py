@@ -60,3 +60,57 @@ def triggered_rules(features: pd.DataFrame, position: int) -> list[str]:
     """Names of the rules that fired for one positional row."""
     flags = rule_flags(features.iloc[[position]])
     return [column for column in flags.columns if bool(flags.iloc[0][column])]
+
+
+def tune_rule_threshold(labels: np.ndarray, scores: np.ndarray) -> float:
+    """Pick the rule threshold with the best F1 on the tuning window."""
+    labels = np.asarray(labels).astype(int)
+    scores = np.asarray(scores, dtype=np.float64)
+    if labels.sum() == 0:
+        raise ValueError("no positives to tune on")
+    candidates = np.unique(scores)
+    best_threshold = float(candidates.max())
+    best_f1 = -1.0
+    for threshold in candidates:
+        flagged = scores >= threshold
+        tp = int((flagged & (labels == 1)).sum())
+        fp = int((flagged & (labels == 0)).sum())
+        fn = int((~flagged & (labels == 1)).sum())
+        precision = tp / (tp + fp) if tp + fp else 0.0
+        recall = tp / (tp + fn) if tp + fn else 0.0
+        f1 = 2 * precision * recall / (precision + recall) if precision + recall else 0.0
+        if f1 > best_f1:
+            best_f1, best_threshold = f1, float(threshold)
+    return best_threshold
+
+
+def evaluate_rules(labels: np.ndarray, scores: np.ndarray, threshold: float) -> dict[str, float]:
+    """Precision/recall/alert volume for the rule baseline."""
+    labels = np.asarray(labels).astype(int)
+    flagged = np.asarray(scores) >= threshold
+    tp = int((flagged & (labels == 1)).sum())
+    fp = int((flagged & (labels == 0)).sum())
+    fn = int((~flagged & (labels == 1)).sum())
+    precision = tp / (tp + fp) if tp + fp else 0.0
+    recall = tp / (tp + fn) if tp + fn else 0.0
+    return {
+        "threshold": float(threshold),
+        "tp": tp,
+        "fp": fp,
+        "precision": precision,
+        "recall": recall,
+        "alerts": int(flagged.sum()),
+    }
+
+
+def compare_rule_vs_model(
+    labels: np.ndarray, rule_scores: np.ndarray, model_scores: np.ndarray, rule_threshold: float
+) -> dict[str, object]:
+    """Side-by-side operating points for the rule baseline and the model."""
+    return {
+        "rules": evaluate_rules(labels, rule_scores, rule_threshold),
+        "model_at_half": evaluate_rules(labels, model_scores, 0.5),
+        "model_rank_auc": float(
+            pd.Series(np.asarray(model_scores)).rank().corr(pd.Series(np.asarray(labels)).rank())
+        ),
+    }
