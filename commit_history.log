@@ -387,3 +387,4 @@
 [2026-05-28T15:23:46] Fix memory issue in batch inference worker
 [2026-05-29T19:46:16] Update feature store integration for batch
 [2026-05-29T09:08:07] Implement cross-validation for time series
+[2026-05-29T17:57:50] WIP: debugging SMOTE class imbalance handling

@@ -239,3 +239,5 @@ def format_number(n: int) -> str:
 # Fix memory issue in batch inference worker [2026-05-28T15:23:46]
 
 # Update feature store integration for batch [2026-05-29T19:46:16]
+
+# WIP: debugging SMOTE class imbalance handling [2026-05-29T17:57:50]
