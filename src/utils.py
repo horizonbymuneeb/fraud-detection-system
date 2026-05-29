@@ -237,3 +237,5 @@ def format_number(n: int) -> str:
 # Fix timestamp feature extraction timezone bug [2026-05-24T09:11:35]
 
 # Fix memory issue in batch inference worker [2026-05-28T15:23:46]
+
+# Update feature store integration for batch [2026-05-29T19:46:16]
