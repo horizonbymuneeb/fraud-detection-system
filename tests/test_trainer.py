@@ -101,3 +101,13 @@ def test_save_and_load_round_trip(tmp_path, fitted):
     assert model_summary(fitted)["n_features"] == len(fitted.feature_names)
     with pytest.raises(FileNotFoundError):
         load_model(tmp_path / "absent.pkl")
+
+
+def test_json_helpers(tmp_path):
+    path = tmp_path / "nested" / "metrics.json"
+    import src.fraud.trainer as trainer
+
+    trainer.dump_json(path, {"a": 1})
+    assert load_json(path) == {"a": 1}
+    with pytest.raises(FileNotFoundError):
+        load_json(tmp_path / "missing.json")

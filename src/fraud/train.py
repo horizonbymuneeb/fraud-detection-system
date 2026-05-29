@@ -48,3 +48,38 @@ def build_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument("--artifacts", default=DEFAULT_ARTIFACT_DIR, help="output directory")
     parser.add_argument("--skip-leak-check", action="store_true", help="skip the leakage assertion")
     return parser
+
+
+def load_or_generate(cfg: Config, data_path: str | None) -> pd.DataFrame:
+    """Read an existing stream or generate one from the config."""
+    if data_path:
+        frame = read_transactions(data_path)
+        validate_transactions(frame)
+        return frame
+    csv_path = Path(cfg.data.output_dir) / "transactions.csv"
+    if csv_path.exists():
+        frame = read_transactions(csv_path)
+        validate_transactions(frame)
+        return frame
+    frame, _path = generate_and_save(cfg)
+    return frame
+
+
+def tune_on_validation(
+    X_train: pd.DataFrame,
+    y_train: np.ndarray,
+    amount_train: np.ndarray,
+    cfg: Config,
+    matrix: CostMatrix,
+) -> dict[str, object]:
+    """Fit on the first part of train, tune the cost threshold on the last part."""
+    fit_idx, tune_idx = temporal_holdout(len(X_train), cfg.model.validation_fraction)
+    if len(np.unique(y_train[fit_idx])) < 2:
+        return {"threshold": 0.5, "note": "training window too small for tuning; fell back to 0.5"}
+    holdout_model = fit_model(X_train.iloc[fit_idx], y_train[fit_idx], cfg)
+    holdout_scores = predict_scores(holdout_model.model, X_train.iloc[tune_idx])
+    report = tune_threshold(
+        amount_train[tune_idx], y_train[tune_idx], holdout_scores, matrix
+    )
+    report["tuned_on"] = int(len(tune_idx))
+    return report
