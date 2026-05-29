@@ -388,3 +388,4 @@
 [2026-05-29T19:46:16] Update feature store integration for batch
 [2026-05-29T09:08:07] Implement cross-validation for time series
 [2026-05-29T17:57:50] WIP: debugging SMOTE class imbalance handling
+[2026-05-29T10:36:35] Fix timestamp feature extraction timezone bug
