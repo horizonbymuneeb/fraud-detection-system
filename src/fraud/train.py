@@ -36,3 +36,15 @@ from .trainer import (
     temporal_holdout,
     threshold_metrics,
 )
+
+DEFAULT_ARTIFACT_DIR = "artifacts"
+
+
+def build_argument_parser() -> argparse.ArgumentParser:
+    """CLI surface: config path, optional data path, artifact directory."""
+    parser = argparse.ArgumentParser(description="Train the card-fraud detector")
+    parser.add_argument("--config", default="config.yaml", help="path to config.yaml")
+    parser.add_argument("--data", default=None, help="existing transactions.csv (skips generation)")
+    parser.add_argument("--artifacts", default=DEFAULT_ARTIFACT_DIR, help="output directory")
+    parser.add_argument("--skip-leak-check", action="store_true", help="skip the leakage assertion")
+    return parser

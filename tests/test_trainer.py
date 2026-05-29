@@ -62,3 +62,42 @@ def test_temporal_holdout_splits_at_the_end():
     assert fit_idx.max() < tune_idx.min()
     assert len(fit_idx) + len(tune_idx) == 100
     assert len(tune_idx) == 20
+
+
+def test_threshold_metrics_are_exact():
+    y = np.array([1, 1, 0, 0, 0])
+    scores = np.array([0.9, 0.4, 0.8, 0.2, 0.1])
+    metrics = threshold_metrics(y, scores, 0.5)
+    assert metrics == {
+        "threshold": 0.5,
+        "tp": 1,
+        "fp": 1,
+        "fn": 1,
+        "tn": 2,
+        "precision": 0.5,
+        "recall": 0.5,
+        "f1": 0.5,
+    }
+    with pytest.raises(ValueError):
+        predict_labels(scores, 0.0)
+    with pytest.raises(ValueError):
+        threshold_metrics(y, scores, 1.5)
+
+
+def test_importances_align_with_columns(tiny_config, tiny_datasets, fitted):
+    importances = feature_importances(fitted.model, fitted.feature_names)
+    assert set(importances.index) == set(fitted.feature_names)
+    assert importances.is_monotonic_decreasing
+    assert importances.sum() == pytest.approx(1.0, abs=1e-9)
+    grouped = grouped_importances(importances, lambda name: name.split("_")[0])
+    assert grouped.sum() == pytest.approx(1.0, abs=1e-9)
+
+
+def test_save_and_load_round_trip(tmp_path, fitted):
+    path = save_model(fitted, tmp_path / "model.pkl", metadata={"threshold": 0.3})
+    bundle = load_model(path)
+    assert bundle["metadata"]["threshold"] == 0.3
+    assert bundle["feature_names"] == fitted.feature_names
+    assert model_summary(fitted)["n_features"] == len(fitted.feature_names)
+    with pytest.raises(FileNotFoundError):
+        load_model(tmp_path / "absent.pkl")
