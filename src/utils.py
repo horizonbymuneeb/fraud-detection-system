@@ -243,3 +243,5 @@ def format_number(n: int) -> str:
 # WIP: debugging SMOTE class imbalance handling [2026-05-29T17:57:50]
 
 # Fix timestamp feature extraction timezone bug [2026-05-29T10:36:35]
+
+# Implement ensemble of XGBoost and RandomForest [2026-06-04T20:38:56]
