@@ -402,3 +402,5 @@ if __name__ == '__main__':
 # Implement cross-validation for time series [2026-05-29T09:08:07]
 
 # Implement Kafka streaming consumer for events [2026-06-01T16:23:26]
+
+# WIP: benchmarking latency on 100K TPS target [2026-06-07T20:17:23]
