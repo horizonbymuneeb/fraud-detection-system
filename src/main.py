@@ -404,3 +404,5 @@ if __name__ == '__main__':
 # Implement Kafka streaming consumer for events [2026-06-01T16:23:26]
 
 # WIP: benchmarking latency on 100K TPS target [2026-06-07T20:17:23]
+
+# Implement ensemble of XGBoost and RandomForest [2026-06-07T09:39:08]
