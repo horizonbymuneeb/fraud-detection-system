@@ -40,3 +40,54 @@ def scale_pos_weight(labels: np.ndarray) -> float:
     if positives == 0:
         raise ValueError("training labels contain no positive examples")
     return float(negatives / positives)
+
+
+def class_balance(labels: np.ndarray) -> dict[str, float]:
+    """Counts and prior for the training labels."""
+    labels = np.asarray(labels).astype(int)
+    positives = int(labels.sum())
+    return {
+        "n": int(len(labels)),
+        "positives": positives,
+        "negatives": int(len(labels) - positives),
+        "prior": float(positives / len(labels)) if len(labels) else 0.0,
+    }
+
+
+def build_estimator(cfg: Config, n_rows: int) -> GradientBoostingClassifier:
+    """Create the GBDT, disabling early stopping when data is too small for it."""
+    params: dict[str, Any] = dict(
+        n_estimators=cfg.model.n_estimators,
+        learning_rate=cfg.model.learning_rate,
+        max_depth=cfg.model.max_depth,
+        min_samples_leaf=cfg.model.min_samples_leaf,
+        subsample=cfg.model.subsample,
+        max_features=cfg.model.max_features,
+        random_state=cfg.model.random_state,
+    )
+    # Early stopping needs two populated classes on both sides of its internal
+    # split; with a small training window that is not guaranteed.
+    if n_rows >= 400 and cfg.model.n_iter_no_change > 0:
+        params["n_iter_no_change"] = cfg.model.n_iter_no_change
+        params["validation_fraction"] = cfg.model.validation_fraction
+    return GradientBoostingClassifier(**params)
+
+
+def fit_model(X: pd.DataFrame, y: np.ndarray, cfg: Config) -> TrainResult:
+    """Fit the classifier on already-imputed, already-clipped features."""
+    if len(X) != len(y):
+        raise ValueError("X and y disagree on row count")
+    labels = np.asarray(y).astype(int)
+    if labels.min() == labels.max():
+        raise ValueError("training labels must contain both classes")
+    weight = scale_pos_weight(labels)
+    model = build_estimator(cfg, len(X))
+    model.fit(X, labels, sample_weight=np.where(labels == 1, weight, 1.0))
+    return TrainResult(
+        model=model,
+        feature_names=list(X.columns),
+        scale_pos_weight=weight,
+        n_train=int(len(X)),
+        n_positive=int(labels.sum()),
+        train_prior=float(labels.mean()),
+    )
