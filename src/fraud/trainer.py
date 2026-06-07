@@ -91,3 +91,40 @@ def fit_model(X: pd.DataFrame, y: np.ndarray, cfg: Config) -> TrainResult:
         n_positive=int(labels.sum()),
         train_prior=float(labels.mean()),
     )
+
+
+def predict_scores(model: GradientBoostingClassifier, X: pd.DataFrame) -> np.ndarray:
+    """Fraud probability for every row."""
+    if len(X) == 0:
+        return np.zeros(0, dtype=np.float64)
+    return model.predict_proba(X)[:, 1]
+
+
+def predict_labels(scores: np.ndarray, threshold: float) -> np.ndarray:
+    """Boolean decisions at ``threshold`` (inclusive)."""
+    if not 0.0 < threshold < 1.0:
+        raise ValueError("threshold must be in (0, 1)")
+    return np.asarray(scores) >= threshold
+
+
+def threshold_metrics(y: np.ndarray, scores: np.ndarray, threshold: float) -> dict[str, float]:
+    """Confusion-derived metrics at one threshold."""
+    labels = np.asarray(y).astype(int)
+    preds = predict_labels(scores, threshold).astype(int)
+    tp = int(((preds == 1) & (labels == 1)).sum())
+    fp = int(((preds == 1) & (labels == 0)).sum())
+    fn = int(((preds == 0) & (labels == 1)).sum())
+    tn = int(((preds == 0) & (labels == 0)).sum())
+    precision = tp / (tp + fp) if tp + fp else 0.0
+    recall = tp / (tp + fn) if tp + fn else 0.0
+    f1 = 2 * precision * recall / (precision + recall) if precision + recall else 0.0
+    return {
+        "threshold": float(threshold),
+        "tp": tp,
+        "fp": fp,
+        "fn": fn,
+        "tn": tn,
+        "precision": precision,
+        "recall": recall,
+        "f1": f1,
+    }
