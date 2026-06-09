@@ -128,3 +128,32 @@ def threshold_metrics(y: np.ndarray, scores: np.ndarray, threshold: float) -> di
         "recall": recall,
         "f1": f1,
     }
+
+
+def temporal_holdout(n_rows: int, fraction: float) -> tuple[np.ndarray, np.ndarray]:
+    """Positional split of the training window: first part fit, last part tune."""
+    if not 0.01 <= fraction < 0.9:
+        raise ValueError("fraction must be in [0.01, 0.9)")
+    if n_rows < 4:
+        raise ValueError("need at least four rows for a temporal holdout")
+    cut = int(n_rows * (1.0 - fraction))
+    cut = min(max(cut, 1), n_rows - 1)
+    fit_idx = np.arange(0, cut)
+    tune_idx = np.arange(cut, n_rows)
+    return fit_idx, tune_idx
+
+
+def feature_importances(model: GradientBoostingClassifier, columns: list[str]) -> pd.Series:
+    """Mean decrease in impurity, sorted descending."""
+    if len(columns) != len(model.feature_importances_):
+        raise ValueError("column count does not match the fitted model")
+    series = pd.Series(model.feature_importances_, index=columns, dtype=np.float64)
+    return series.sort_values(ascending=False)
+
+
+def grouped_importances(importances: pd.Series, group_of: Any) -> pd.Series:
+    """Sum importances by feature group (velocity / behaviour / context)."""
+    grouped: dict[str, float] = {}
+    for name, value in importances.items():
+        grouped[group_of(name)] = grouped.get(group_of(name), 0.0) + float(value)
+    return pd.Series(grouped, dtype=np.float64).sort_values(ascending=False)
