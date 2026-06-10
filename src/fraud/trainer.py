@@ -157,3 +157,46 @@ def grouped_importances(importances: pd.Series, group_of: Any) -> pd.Series:
     for name, value in importances.items():
         grouped[group_of(name)] = grouped.get(group_of(name), 0.0) + float(value)
     return pd.Series(grouped, dtype=np.float64).sort_values(ascending=False)
+
+
+def model_summary(result: TrainResult) -> dict[str, object]:
+    """Facts about a fitted model, logged by the training CLI."""
+    model = result.model
+    return {
+        "n_train": result.n_train,
+        "n_positive": result.n_positive,
+        "scale_pos_weight": result.scale_pos_weight,
+        "train_prior": result.train_prior,
+        "n_estimators": int(model.n_estimators_),
+        "n_features": len(result.feature_names),
+    }
+
+
+def save_model(result: TrainResult, path: str | Path, metadata: dict[str, object] | None = None) -> Path:
+    """Pickle the model and write the side-car metadata JSON next to it."""
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("wb") as handle:
+        pickle.dump(
+            {
+                "model": result.model,
+                "feature_names": result.feature_names,
+                "metadata": metadata or {},
+                "train": model_summary(result),
+            },
+            handle,
+            protocol=pickle.HIGHEST_PROTOCOL,
+        )
+    return path
+
+
+def load_model(path: str | Path) -> dict[str, object]:
+    """Load a bundle written by :func:`save_model`."""
+    path = Path(path)
+    if not path.exists():
+        raise FileNotFoundError(f"model not found: {path}")
+    with path.open("rb") as handle:
+        bundle = pickle.load(handle)
+    if not isinstance(bundle, dict) or "model" not in bundle:
+        raise ValueError(f"{path} does not contain a model bundle")
+    return bundle
