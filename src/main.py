@@ -408,3 +408,5 @@ if __name__ == '__main__':
 # Implement ensemble of XGBoost and RandomForest [2026-06-07T09:39:08]
 
 # Add logging for prediction audit trail [2026-06-09T12:29:14]
+
+# Add model explainability with SHAP values [2026-06-10T11:57:39]
