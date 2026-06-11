@@ -200,3 +200,19 @@ def load_model(path: str | Path) -> dict[str, object]:
     if not isinstance(bundle, dict) or "model" not in bundle:
         raise ValueError(f"{path} does not contain a model bundle")
     return bundle
+
+
+def dump_json(path: str | Path, payload: dict[str, object]) -> Path:
+    """Write a metrics/report mapping as JSON, creating parent directories."""
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, indent=2, default=float), encoding="utf-8")
+    return path
+
+
+def load_json(path: str | Path) -> dict[str, object]:
+    """Read a JSON mapping, failing loudly when the file is missing."""
+    path = Path(path)
+    if not path.exists():
+        raise FileNotFoundError(f"json file not found: {path}")
+    return json.loads(path.read_text(encoding="utf-8"))
