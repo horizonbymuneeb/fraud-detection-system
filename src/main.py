@@ -1,412 +1,190 @@
-#!usr/bin/env python3
-"""Main module for production fraud-detection-system."""
 import torch
 import torch.nn as nn
 import numpy as np
-import pandas as pd
-from pathlib import Path
+import random
 import json
-import yaml
-from typing import Dict, List, Optional, Tuple
 import logging
+from pathlib import Path
+from typing import Dict, List, Optional, Tuple
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-class Config:
-    """Configuration manager."""
-    
-    def __init__(self, config_path: str):
-        self.config_path = config_path
-        self.data = self._load()
-    
-    def _load(self) -> Dict:
-        with open(self.config_path, 'r') as f:
-            return yaml.safe_load(f)
-    
-    def get(self, key: str, default=None):
-        keys = key.split('.')
-        value = self.data
-        for k in keys:
-            value = value.get(k, default)
-            if value is None:
-                return default
-        return value
 
-
-class BaseModel(nn.Module):
-    """Base model class with training and presserving functionality."""
-    
-    def __init__(self, config: Config):
-        super().__init__()
-        self.config = config
-        self.device = torch.device(config.get('training.device', 'cpu'))
-        self._setup_model()
-    
-    def _setup_model(self):
-        """Override in subclass to define model architecture."""
-        pass
-    
-    def fit(self, dataset, epochs: int = 100):
-        """Train the model on given dataset."""
-        self.to(self.device)
+class ProductionModel(nn.Module):
+    def __init__(self, input_dim: int = 784, hidden_dims: List[int] = [256, 128],
+                 num_classes: int = 10, dropout: float = 0.2):
+        super(ProductionModel, self).__init__()
+        self.input_dim = input_dim
+        self.num_classes = num_classes
         
-        optimizer = torch.optim.Adam(
-            self.parameters(),
-            lr=self.config.get('training.learning_rate', 0.001)
-        )
-        criterion = nn.CrossEntropyLoss()
+        # Build layers dynamically
+        layers = []
+        prev_dim = input_dim
+        for h_dim in hidden_dims:
+            layers.append(nn.Linear(prev_dim, h_dim))
+            layers.append(nn.BatchNorm1d(h_dim))
+            layers.append(nn.ReLU(inplace=True))
+            layers.append(nn.Dropout(dropout))
+            prev_dim = h_dim
         
-        logger.info(f"Training for {epochs} epochs")
+        layers.append(nn.Linear(prev_dim, num_classes))
+        self.network = nn.Sequential(*layers)
         
-        for epoch in range(epochs):
-            self.train()
-            total_loss = 0.0
-            correct = 0
-            total = 0
-            
-            for batch_idx, (data, target) in enumerate(dataset):
-                data, target = data.to(self.device), target.to(self.device)
-                
-                optimizer.zero_grad()
-                output = self(data)
-                loss = criterion(output, target)
-                loss.backward()
-                optimizer.step()
-                
-                total_loss += loss.item()
-                pred = output.argmax(dim=1)
-                correct += pred.eq(target).sum().item()
-                total += target.size(0)
-            
-            accuracy = correct / total
-            logger.info(f"Epoch {epoch+1}/{epochs}: "
-                       f"Loss={total_loss:.4f}, Accuracy={accuracy:.4f}")
+        # Initialize weights
+        self._initialize_weights()
+        
+        self.config = {
+            'input_dim': input_dim,
+            'hidden_dims': hidden_dims,
+            'num_classes': num_classes,
+            'dropout': dropout
+        }
+    
+    def _initialize_weights(self):
+        for m in self.modules():
+            if isinstance(m, nn.Linear):
+                nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+                if m.bias is not None:
+                    nn.init.constant_(m.bias, 0)
+            elif isinstance(m, nn.BatchNorm1d):
+                nn.init.constant_(m.weight, 1)
+                nn.init.constant_(m.bias, 0)
+    
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return self.network(x)
     
     def predict(self, x: torch.Tensor) -> torch.Tensor:
-        """Make predictions on input data."""
         self.eval()
         with torch.no_grad():
-            return self(x.to(self.device))
+            return torch.softmax(self(x), dim=1)
     
     def save(self, path: str):
-        """Save model checkpoint."""
         Path(path).parent.mkdir(parents=True, exist_ok=True)
         torch.save({
-            'config': self.config.data,
-            'state_dict': self.state_dict()
+            'config': self.config,
+            'state_dict': self.state_dict(),
+            'network': self.network
         }, path)
         logger.info(f"Model saved to {path}")
     
     @classmethod
     def load(cls, path: str):
-        """Load model from checkpoint."""
         checkpoint = torch.load(path, map_location='cpu')
-        config = Config(checkpoint['config'])
-        model = cls(config)
+        model = cls(**checkpoint['config'])
         model.load_state_dict(checkpoint['state_dict'])
         return model
 
-
-class DataLoader:
-    """Generic data loader with preprocessing."""
+class Trainer:
+    def __init__(self, model: nn.Module, device: str = 'cuda' if torch.cuda.is_available() else 'cpu',
+                 lr: float = 0.001, weight_decay: float = 1e-4):
+        self.model = model.to(device)
+        self.device = device
+        self.optimizer = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=weight_decay)
+        self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, patience=5)
+        self.criterion = nn.CrossEntropyLoss()
+        self.history = {'train_loss': [], 'val_loss': [], 'val_acc': []}
     
-    def __init__(self, source: str, batch_size: int = 32,
-                 shuffle: bool = True, num_workers: int = 4):
-        self.source = source
-        self.batch_size = batch_size
-        self.shuffle = shuffle
-        self.num_workers = num_workers
-        self.data = None
-        self.labels = None
+    def train_epoch(self, train_loader):
+        self.model.train()
+        total_loss = 0.0
+        for batch_idx, (data, target) in enumerate(train_loader):
+            data, target = data.to(self.device), target.to(self.device)
+            self.optimizer.zero_grad()
+            output = self.model(data)
+            loss = self.criterion(output, target)
+            loss.backward()
+            torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0)
+            self.optimizer.step()
+            total_loss += loss.item()
+        return total_loss / len(train_loader)
     
-    def load(self):
-        """Load data from source."""
-        # Load from CSV/Parquet/etc
-        if Path(self.source).suffix == '.csv':
-            df = pd.read_csv(self.source)
-        elif Path(self.source).suffix == '.parquet':
-            df = pd.read_parquet(self.source)
-        else:
-            raise ValueError(f"Unsupported file format: {self.source}")
-        
-        self.data = df.drop('target', axis=1).values
-        self.labels = df['target'].values
-        
-        return self
+    def validate(self, val_loader):
+        self.model.eval()
+        val_loss = 0.0
+        correct = 0
+        total = 0
+        with torch.no_grad():
+            for data, target in val_loader:
+                data, target = data.to(self.device), target.to(self.device)
+                output = self.model(data)
+                val_loss += self.criterion(output, target).item()
+                pred = output.argmax(dim=1)
+                correct += pred.eq(target).sum().item()
+                total += target.size(0)
+        return val_loss / len(val_loader), 100. * correct / total
     
-    def __iter__(self):
-        """Iterator yielding batches."""
-        if self.data is None:
-            self.load()
+    def fit(self, train_loader, val_loader, epochs: int = 100, patience: int = 10):
+        logger.info(f"Training for {epochs} epochs with patience {patience}")
+        best_loss = float('inf')
+        patience_counter = 0
         
-        indices = np.arange(len(self.data))
-        if self.shuffle:
-            np.random.shuffle(indices)
+        for epoch in range(1, epochs + 1):
+            train_loss = self.train_epoch(train_loader)
+            val_loss, val_acc = self.validate(val_loader)
+            
+            self.history['train_loss'].append(train_loss)
+            self.history['val_loss'].append(val_loss)
+            self.history['val_acc'].append(val_acc)
+            
+            self.scheduler.step(val_loss)
+            
+            if val_loss < best_loss:
+                best_loss = val_loss
+                patience_counter = 0
+                # Save best model
+                self.model.save('models/best_model.pt')
+            else:
+                patience_counter += 1
+            
+            if epoch % 10 == 0:
+                logger.info(f"Epoch {epoch}/{epochs} | "
+                          f"Train Loss: {train_loss:.4f} | "
+                          f"Val Loss: {val_loss:.4f} | "
+                          f"Val Acc: {val_acc:.2f}%")
+            
+            if patience_counter >= patience:
+                logger.info(f"Early stopping at epoch {epoch}")
+                break
         
-        for i in range(0, len(indices), self.batch_size):
-            batch_idx = indices[i:i + self.batch_size]
-            yield (torch.FloatTensor(self.data[batch_idx]),
-                   torch.LongTensor(self.labels[batch_idx]))
+        return self.history
 
 
 def main():
-    """Main entry point."""
-    logger.info("Starting fraud-detection-system pipeline")
+    logger.info("Starting training pipeline")
     
-    # Load configuration
-    config = Config('config.yaml')
+    # Set all seeds for reproducibility
+    seed = 42
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed)
+    
+    # Example: simple dataset (replace with real data)
+    from torch.utils.data import TensorDataset, DataLoader
+    
+    # Create synthetic dataset
+    n_samples = 1000
+    X = torch.randn(n_samples, 784)
+    y = torch.randint(0, 10, (n_samples,))
+    
+    train_dataset = TensorDataset(X, y)
+    val_dataset = TensorDataset(X, y)
+    
+    train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
+    val_loader = DataLoader(val_dataset, batch_size=32)
     
     # Initialize model
-    model = BaseModel(config)
-    
-    # Load data
-    data_loader = DataLoader(config.get('data.path'))
+    model = ProductionModel(input_dim=784, hidden_dims=[512, 256, 128], num_classes=10)
     
     # Train
-    model.fit(data_loader)
+    trainer = Trainer(model, lr=0.001)
+    history = trainer.fit(train_loader, val_loader, epochs=50, patience=10)
     
-    # Save
-    model.save('models/model.pt')
+    logger.info("Training completed successfully")
     
-    logger.info("Pipeline completed successfully")
-
+    return history
 
 if __name__ == '__main__':
     main()
-
-# Add model explainability with SHAP values [2025-06-11T12:16:14]
-
-# WIP: tuning neural networks for fraud patterns [2025-06-12T14:20:55]
-
-# Fix memory issue in batch inference worker [2025-06-15T13:18:11]
-
-# Implement Kafka streaming consumer for events [2025-06-17T10:22:25]
-
-# Implement A/B testing framework for models [2025-06-18T20:33:11]
-
-# Add transaction velocity feature engineering [2025-06-19T14:27:56]
-
-# WIP: benchmarking latency on 100K TPS target [2025-06-19T20:07:29]
-
-# Fix timestamp feature extraction timezone bug [2025-06-24T15:05:57]
-
-# Update feature pipeline for real-time scoring [2025-07-03T09:02:59]
-
-# Add logging for prediction audit trail [2025-07-14T17:54:39]
-
-# Update deployment scripts for Docker container [2025-07-16T15:41:32]
-
-# Implement Kafka streaming consumer for events [2025-07-17T19:05:21]
-
-# Update deployment scripts for Docker container [2025-07-19T15:55:57]
-
-# Add model monitoring dashboard for drift [2025-07-20T10:40:30]
-
-# Implement A/B testing framework for models [2025-07-21T13:02:16]
-
-# Update dashboard for fraud metrics visualization [2025-07-22T18:45:22]
-
-# Add model monitoring dashboard for drift [2025-07-22T14:04:38]
-
-# Implement XGBoost fraud detection classifier [2025-07-28T10:35:38]
-
-# Fix memory issue in batch inference worker [2025-07-29T18:57:12]
-
-# Add anomaly detection as backup classifier [2025-07-31T17:54:30]
-
-# WIP: debugging SMOTE class imbalance handling [2025-08-03T14:31:13]
-
-# WIP: benchmarking latency on 100K TPS target [2025-08-04T10:41:00]
-
-# Add model monitoring dashboard for drift [2025-08-06T09:15:22]
-
-# Update feature store integration for batch [2025-08-06T10:55:44]
-
-# Add model explainability with SHAP values [2025-08-08T12:08:41]
-
-# Update feature pipeline for real-time scoring [2025-08-11T11:14:28]
-
-# Implement A/B testing framework for models [2025-08-12T17:44:31]
-
-# Fix timestamp feature extraction timezone bug [2025-08-14T12:52:12]
-
-# Update feature pipeline for real-time scoring [2025-08-18T18:08:32]
-
-# Fix timestamp feature extraction timezone bug [2025-08-19T10:09:57]
-
-# Implement Kafka streaming consumer for events [2025-08-22T09:56:26]
-
-# WIP: tuning neural networks for fraud patterns [2025-08-25T09:22:07]
-
-# Add model monitoring dashboard for drift [2025-08-28T18:34:34]
-
-# Update feature store integration for batch [2025-08-28T10:02:52]
-
-# WIP: tuning neural networks for fraud patterns [2025-09-10T13:00:27]
-
-# Update feature pipeline for real-time scoring [2025-09-11T15:10:23]
-
-# Update dashboard for fraud metrics visualization [2025-09-22T17:53:49]
-
-# Implement A/B testing framework for models [2025-09-23T14:12:22]
-
-# Add logging for prediction audit trail [2025-09-30T12:16:06]
-
-# Update dashboard for fraud metrics visualization [2025-10-03T16:41:02]
-
-# Update feature store integration for batch [2025-10-09T17:19:41]
-
-# Implement ensemble of XGBoost and RandomForest [2025-10-10T09:14:10]
-
-# Fix timestamp feature extraction timezone bug [2025-10-16T20:11:09]
-
-# Update dashboard for fraud metrics visualization [2025-10-23T14:42:13]
-
-# Fix memory issue in batch inference worker [2025-10-25T12:11:04]
-
-# Fix memory issue in batch inference worker [2025-10-29T09:09:16]
-
-# Implement real-time inference with Redis cache [2025-11-03T20:58:53]
-
-# Add transaction velocity feature engineering [2025-11-05T19:22:54]
-
-# Implement Kafka streaming consumer for events [2025-11-06T19:05:20]
-
-# WIP: debugging SMOTE class imbalance handling [2025-11-06T11:14:21]
-
-# Update deployment scripts for Docker container [2025-11-11T10:29:00]
-
-# WIP: benchmarking latency on 100K TPS target [2025-11-12T19:32:41]
-
-# Update feature store integration for batch [2025-11-17T20:09:27]
-
-# Implement real-time inference with Redis cache [2025-11-18T11:54:29]
-
-# WIP: debugging SMOTE class imbalance handling [2025-11-20T20:35:00]
-
-# Add transaction velocity feature engineering [2025-11-30T20:29:16]
-
-# Implement cross-validation for time series [2025-12-03T12:10:35]
-
-# Implement ensemble of XGBoost and RandomForest [2025-12-08T13:59:45]
-
-# Add model explainability with SHAP values [2025-12-11T17:49:00]
-
-# Add logging for prediction audit trail [2025-12-19T15:06:47]
-
-# Fix memory issue in batch inference worker [2025-12-19T18:42:30]
-
-# Implement real-time inference with Redis cache [2025-12-27T11:16:45]
-
-# Update deployment scripts for Docker container [2026-01-02T14:00:16]
-
-# Implement XGBoost fraud detection classifier [2026-01-06T15:37:50]
-
-# Add logging for prediction audit trail [2026-01-09T11:12:57]
-
-# Implement XGBoost fraud detection classifier [2026-01-20T20:52:08]
-
-# WIP: debugging SMOTE class imbalance handling [2026-01-20T20:44:24]
-
-# Implement Kafka streaming consumer for events [2026-01-23T20:31:57]
-
-# Add model monitoring dashboard for drift [2026-01-30T11:03:15]
-
-# Update deployment scripts for Docker container [2026-01-30T16:17:28]
-
-# Update feature store integration for batch [2026-02-03T15:59:10]
-
-# Add logging for prediction audit trail [2026-02-05T09:24:55]
-
-# WIP: benchmarking latency on 100K TPS target [2026-02-05T09:39:02]
-
-# Implement cross-validation for time series [2026-02-10T17:20:40]
-
-# Add transaction velocity feature engineering [2026-02-11T19:24:17]
-
-# Add transaction velocity feature engineering [2026-02-13T17:25:18]
-
-# WIP: tuning neural networks for fraud patterns [2026-02-17T14:54:18]
-
-# Implement A/B testing framework for models [2026-02-19T17:30:11]
-
-# Implement real-time inference with Redis cache [2026-02-19T19:46:52]
-
-# Implement real-time inference with Redis cache [2026-02-24T18:59:55]
-
-# Implement real-time inference with Redis cache [2026-02-28T19:57:48]
-
-# Implement XGBoost fraud detection classifier [2026-03-04T19:17:02]
-
-# Implement cross-validation for time series [2026-03-05T11:01:06]
-
-# Add model explainability with SHAP values [2026-03-12T19:20:30]
-
-# Update feature pipeline for real-time scoring [2026-03-17T17:40:19]
-
-# Implement cross-validation for time series [2026-03-23T12:22:17]
-
-# Add logging for prediction audit trail [2026-03-24T17:23:23]
-
-# Update deployment scripts for Docker container [2026-03-27T17:18:30]
-
-# Implement real-time inference with Redis cache [2026-03-30T13:52:54]
-
-# Update feature store integration for batch [2026-04-02T10:01:58]
-
-# Implement cross-validation for time series [2026-04-03T09:35:35]
-
-# Add model explainability with SHAP values [2026-04-13T11:22:42]
-
-# Implement A/B testing framework for models [2026-04-14T15:28:27]
-
-# Add anomaly detection as backup classifier [2026-04-17T15:45:29]
-
-# Implement XGBoost fraud detection classifier [2026-04-20T11:01:47]
-
-# Implement ensemble of XGBoost and RandomForest [2026-04-23T09:31:04]
-
-# Fix timestamp feature extraction timezone bug [2026-04-26T12:55:23]
-
-# Add anomaly detection as backup classifier [2026-04-26T13:49:06]
-
-# Add anomaly detection as backup classifier [2026-05-01T12:03:24]
-
-# WIP: tuning neural networks for fraud patterns [2026-05-02T13:02:38]
-
-# Update feature pipeline for real-time scoring [2026-05-02T15:33:02]
-
-# Implement XGBoost fraud detection classifier [2026-05-04T19:13:56]
-
-# Add logging for prediction audit trail [2026-05-04T15:45:05]
-
-# WIP: benchmarking latency on 100K TPS target [2026-05-06T19:33:49]
-
-# Update deployment scripts for Docker container [2026-05-09T11:38:01]
-
-# Update feature pipeline for real-time scoring [2026-05-13T11:46:41]
-
-# Implement Kafka streaming consumer for events [2026-05-18T11:10:30]
-
-# Add model monitoring dashboard for drift [2026-05-19T19:50:12]
-
-# Add model explainability with SHAP values [2026-05-21T16:02:37]
-
-# Implement real-time inference with Redis cache [2026-05-22T11:54:33]
-
-# WIP: debugging SMOTE class imbalance handling [2026-05-22T12:10:53]
-
-# Add model monitoring dashboard for drift [2026-05-26T13:10:49]
-
-# Implement cross-validation for time series [2026-05-29T09:08:07]
-
-# Implement Kafka streaming consumer for events [2026-06-01T16:23:26]
-
-# WIP: benchmarking latency on 100K TPS target [2026-06-07T20:17:23]
-
-# Implement ensemble of XGBoost and RandomForest [2026-06-07T09:39:08]
-
-# Add logging for prediction audit trail [2026-06-09T12:29:14]
-
-# Add model explainability with SHAP values [2026-06-10T11:57:39]
